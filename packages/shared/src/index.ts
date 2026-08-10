@@ -17,4 +17,5 @@ export interface ApiResponse<T = unknown> {
 export * from './schemas/invoice.schema';
 export * from './schemas/receipt.schema';
 export * from './schemas/resume.schema';
+export * from './schemas/order.schema';
 export * from './schemas/document-response.schema';

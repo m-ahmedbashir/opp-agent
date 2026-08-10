@@ -10,5 +10,6 @@ import { OcrService } from './ocr.service';
     imports: [ComplianceModule, PrismaModule, UsersModule],
     controllers: [ExtractionController],
     providers: [ExtractionService, OcrService],
+    exports: [ExtractionService],
 })
 export class ExtractionModule { }

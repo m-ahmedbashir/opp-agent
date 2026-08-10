@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { PDFParse } from 'pdf-parse';
 import { ComplianceService } from '../compliance/compliance.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import type { Invoice, InvoiceConfidence, Receipt, ReceiptConfidence, Resume, ResumeConfidence } from '@opp/shared';
+import type { Invoice, InvoiceConfidence, Receipt, ReceiptConfidence, Resume, ResumeConfidence, PurchaseOrder, PurchaseOrderConfidence } from '@opp/shared';
 import {
     DEFAULT_MODEL_KEY,
     DEFAULT_PROCESSING_MODE,
@@ -31,8 +31,8 @@ export interface ProcessedFile {
     sizeBytes: number;
 }
 
-export type ExtractedData = Invoice | Receipt | Resume;
-export type ExtractedConfidence = InvoiceConfidence | ReceiptConfidence | ResumeConfidence;
+export type ExtractedData = Invoice | Receipt | Resume | PurchaseOrder;
+export type ExtractedConfidence = InvoiceConfidence | ReceiptConfidence | ResumeConfidence | PurchaseOrderConfidence;
 
 export interface ExtractionResult {
     /** Original file info (omitted if only text was pasted) */

@@ -24,4 +24,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./schemas/invoice.schema"), exports);
 __exportStar(require("./schemas/receipt.schema"), exports);
 __exportStar(require("./schemas/resume.schema"), exports);
+__exportStar(require("./schemas/order.schema"), exports);
 __exportStar(require("./schemas/document-response.schema"), exports);

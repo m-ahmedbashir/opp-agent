@@ -6,6 +6,8 @@ import {
     ReceiptConfidenceSchema,
     ResumeSchema,
     ResumeConfidenceSchema,
+    PurchaseOrderSchema,
+    PurchaseOrderConfidenceSchema,
     buildResponseSchema,
 } from '@opp/shared';
 
@@ -72,6 +74,14 @@ export const DOCUMENT_TYPE_REGISTRY = {
         prompt: buildExtractionPrompt(
             'You are an invoice processing assistant. Extract the invoice data from the document and populate every field you can find.',
             'Fields that are commonly absent from invoices (dueDate, taxAmount, customerAddress) should realistically score lower when the document does not make them explicit.',
+        ),
+    },
+    purchaseOrder: {
+        label: 'Purchase Order',
+        schema: buildResponseSchema(PurchaseOrderSchema, PurchaseOrderConfidenceSchema),
+        prompt: buildExtractionPrompt(
+            'You are a purchase order processing assistant. Extract the purchase order data from the document and populate every field you can find.',
+            'For lineItems, infer lineNumber starting from 1. Populate matchedSystemSku and skuMatchScore only when a system SKU is clearly stated in the document; otherwise leave matchedSystemSku null and skuMatchScore 0.',
         ),
     },
     receipt: {

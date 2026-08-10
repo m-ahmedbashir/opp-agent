@@ -20,6 +20,7 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   documents        Document[]
+  purchaseOrders   PurchaseOrder[]
 }
 
 model Document {
@@ -44,6 +45,55 @@ model Document {
 
   @@index([userId])
   @@index([documentType])
+}
+
+model PurchaseOrder {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  poNumber         String
+  orderDate        String?
+  customerName     String?
+  customerEmail    String?
+  shippingAddress  String?
+  currency         String?
+  totalAmount      Float?
+
+  // HITL lifecycle
+  status           String   @default("PENDING_REVIEW") // PENDING_REVIEW | APPROVED | REJECTED
+
+  // AI confidence from extraction
+  fieldConfidence  Json?
+  avgConfidence    Float?
+
+  lineItems        OrderLineItem[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderLineItem {
+  id               String   @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  lineNumber       Int
+  rawDescription   String
+  customerSku      String?
+  matchedSystemSku String?
+  skuMatchScore    Float    @default(0)
+  quantity         Int
+  unitPrice        Float?
+  totalAmount      Float?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([purchaseOrderId])
 }
 
 model ExtractionLog {
