@@ -21,6 +21,7 @@ model User {
   updatedAt        DateTime @updatedAt
   documents        Document[]
   purchaseOrders   PurchaseOrder[]
+  emailAccounts  EmailAccount[]
 }
 
 model Document {
@@ -94,6 +95,33 @@ model OrderLineItem {
   updatedAt        DateTime @updatedAt
 
   @@index([purchaseOrderId])
+}
+
+model EmailAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  email             String   // display address
+  provider          String   @default("imap") // "imap" | future: "gmail-oauth" | "outlook-oauth"
+  imapHost          String
+  imapPort          Int      @default(993)
+  imapSecure        Boolean  @default(true)
+  username          String
+
+  // AES-256-GCM ciphertext — see common/crypto/encryption.service.ts
+  encryptedPassword String
+
+  enabled           Boolean  @default(true)
+  lastProcessedUid  Int      @default(0)
+  lastSyncAt        DateTime @default(now())
+  lastSyncStatus    String   @default("PENDING") // PENDING | OK | ERROR
+  lastSyncError     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model ExtractionLog {

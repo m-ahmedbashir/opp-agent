@@ -18,6 +18,7 @@ import {
     type SavedPurchaseOrder,
     type SavedLineItem,
 } from '@/features/orders/use-orders';
+import { EmailAccountsForm } from '@/features/orders/email-accounts-form';
 
 function ConfidenceBadge({ score }: { score: number | null | undefined }) {
     if (score === null || score === undefined) return null;
@@ -244,6 +245,8 @@ export function OrdersView() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <EmailAccountsForm />
 
             <div className="space-y-4">
                 <div className="flex items-center gap-2">
