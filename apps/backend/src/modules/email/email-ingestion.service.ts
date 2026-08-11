@@ -5,21 +5,17 @@ import { EmailAccountService } from './email-account.service';
 import { ExtractionService } from '../extraction/extraction.service';
 import { ComplianceService } from '../compliance/compliance.service';
 import { OrdersService } from '../orders/orders.service';
+import { InvoicesService } from '../invoices/invoices.service';
+import { DocumentsService } from '../documents/documents.service';
 import Imap from 'imap';
 import { simpleParser, ParsedMail } from 'mailparser';
 
-const PO_KEYWORDS = [
-    'purchase order',
-    'po number',
-    'p.o. number',
-    'new order',
-    'order confirmation',
-    'purchaseorder',
-];
-
 /**
- * Polls connected IMAP email accounts and feeds candidate purchase-order
- * emails into the existing extraction/SKU-matching/approval pipeline.
+ * Polls connected IMAP email accounts and feeds every message that carries
+ * extractable content (text body or document attachment) into the extraction
+ * pipeline. The AI classifies the document and this service routes the result
+ * to the appropriate downstream pipeline (invoice, purchase order, receipt,
+ * resume, etc.). No keyword pre-filtering — the model decides what is actionable.
  */
 @Injectable()
 export class EmailIngestionService {
@@ -31,6 +27,8 @@ export class EmailIngestionService {
         private readonly extractionService: ExtractionService,
         private readonly complianceService: ComplianceService,
         private readonly ordersService: OrdersService,
+        private readonly invoicesService: InvoicesService,
+        private readonly documentsService: DocumentsService,
     ) {}
 
     /**
@@ -85,40 +83,32 @@ export class EmailIngestionService {
                 try {
                     const parsed = await simpleParser(message.body);
 
-                    if (this.isPurchaseOrderCandidate(parsed)) {
-                        const textPayload = this.buildTextPayload(parsed);
-                        const pdfAttachments = this.collectPdfAttachments(parsed);
-
-                        if (pdfAttachments.length === 0 && !textPayload.trim()) {
-                            this.logger.debug(`Skipping email UID ${message.uid}: no extractable content.`);
-                            skipped++;
-                            continue;
-                        }
-
-                        // Prefer the first PDF attachment as the primary source.
-                        const file = pdfAttachments[0];
-
-                        const extractionResult = await this.extractionService.processFile(
-                            file,
-                            textPayload || undefined,
-                            undefined, // modelKey
-                            undefined, // apiKeyOverride
-                            undefined, // processingMode
-                            'purchaseOrder',
-                        );
-
-                        const orderData = extractionResult.extractedData as any;
-                        await this.ordersService.saveOrder(
-                            orderData,
-                            account.userId,
-                            extractionResult.confidence as any,
-                            extractionResult.avgConfidence,
-                        );
-
-                        processed++;
-                    } else {
+                    if (!this.hasExtractableContent(parsed)) {
+                        this.logger.debug(`Skipping email UID ${message.uid}: no extractable content.`);
                         skipped++;
+                        if (message.uid > highestUid) {
+                            highestUid = message.uid;
+                        }
+                        continue;
                     }
+
+                    const textPayload = this.buildTextPayload(parsed);
+                    const documentAttachments = this.collectDocumentAttachments(parsed);
+
+                    // Prefer the first document attachment as the primary source.
+                    const file = documentAttachments[0];
+
+                    const extractionResult = await this.extractionService.processFile(
+                        file,
+                        textPayload || undefined,
+                        undefined, // modelKey
+                        undefined, // apiKeyOverride
+                        undefined, // processingMode
+                        'auto',
+                    );
+
+                    await this.routeExtractionResult(extractionResult, account.userId);
+                    processed++;
 
                     if (message.uid > highestUid) {
                         highestUid = message.uid;
@@ -162,28 +152,85 @@ export class EmailIngestionService {
         return { processed, skipped };
     }
 
-    private isPurchaseOrderCandidate(parsed: ParsedMail): boolean {
-        const subject = (parsed.subject ?? '').toLowerCase();
-        const text = (parsed.text ?? '').toLowerCase();
-        const combined = `${subject} ${text}`;
+    private hasExtractableContent(parsed: ParsedMail): boolean {
+        const hasDocumentAttachment = this.collectDocumentAttachments(parsed).length > 0;
+        const hasBodyText = (parsed.text ?? '').trim().length > 0;
+        return hasDocumentAttachment || hasBodyText;
+    }
 
-        const hasKeyword = PO_KEYWORDS.some((keyword) => combined.includes(keyword.toLowerCase()));
-        const hasPdfAttachment = parsed.attachments.some((att) => att.contentType === 'application/pdf' || att.filename?.toLowerCase().endsWith('.pdf'));
+    private async routeExtractionResult(result: any, userId: string): Promise<void> {
+        const documentType: string = result.documentType;
+        const data = result.extractedData;
+        const confidence = result.confidence;
+        const avgConfidence = result.avgConfidence;
 
-        return hasKeyword || hasPdfAttachment;
+        switch (documentType) {
+            case 'invoice':
+                await this.invoicesService.saveInvoice(data, userId, undefined, confidence, avgConfidence);
+                this.logger.log(`Routed email extraction to invoice pipeline.`);
+                break;
+            case 'purchaseOrder':
+                await this.ordersService.saveOrder(data, userId, confidence, avgConfidence);
+                this.logger.log(`Routed email extraction to purchase-order pipeline.`);
+                break;
+            case 'receipt':
+            case 'resume':
+                await this.documentsService.saveDocument(documentType, data, userId, confidence, avgConfidence);
+                this.logger.log(`Routed email extraction to generic document pipeline (${documentType}).`);
+                break;
+            default:
+                this.logger.warn(`Email returned unhandled document type '${documentType}' — flagging for review.`);
+                await this.documentsService.saveDocument(documentType || 'unknown', data, userId, confidence, avgConfidence);
+                break;
+        }
     }
 
     private buildTextPayload(parsed: ParsedMail): string {
         const parts: string[] = [];
-        if (parsed.subject) parts.push(`Subject: ${parsed.subject}`);
-        if (parsed.from?.text) parts.push(`From: ${parsed.from.text}`);
-        if (parsed.text) parts.push(parsed.text);
+
+        if (parsed.subject) parts.push(`Email Subject: ${parsed.subject}`);
+        if (parsed.from?.text) parts.push(`Email From: ${parsed.from.text}`);
+
+        const toText = Array.isArray(parsed.to)
+            ? parsed.to.map((addr) => addr.text).filter(Boolean).join(', ')
+            : parsed.to?.text;
+        if (toText) parts.push(`Email To: ${toText}`);
+
+        if (parsed.date) parts.push(`Email Date: ${parsed.date.toISOString()}`);
+
+        const attachmentNames = parsed.attachments
+            .map((att) => att.filename)
+            .filter((name): name is string => typeof name === 'string' && name.length > 0);
+
+        if (attachmentNames.length > 0) {
+            parts.push(`Email Attachments: ${attachmentNames.join(', ')}`);
+        }
+
+        if (parsed.text) {
+            parts.push('--- Email Body ---');
+            parts.push(parsed.text);
+        }
+
         return parts.join('\n\n');
     }
 
-    private collectPdfAttachments(parsed: ParsedMail): Express.Multer.File[] {
+    private collectDocumentAttachments(parsed: ParsedMail): Express.Multer.File[] {
+        const supportedMimeTypes = new Set([
+            'application/pdf',
+            'image/png',
+            'image/jpeg',
+            'image/webp',
+            'text/plain',
+            'text/csv',
+            'application/json',
+        ]);
+
         return parsed.attachments
-            .filter((att) => att.contentType === 'application/pdf' || att.filename?.toLowerCase().endsWith('.pdf'))
+            .filter((att) => {
+                if (supportedMimeTypes.has(att.contentType)) return true;
+                const name = att.filename?.toLowerCase() ?? '';
+                return name.endsWith('.pdf') || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.txt') || name.endsWith('.csv') || name.endsWith('.json');
+            })
             .map((att, index) => ({
                 fieldname: 'file',
                 originalname: att.filename ?? `attachment-${index + 1}.pdf`,

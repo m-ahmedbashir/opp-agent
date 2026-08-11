@@ -4,6 +4,8 @@ import { EmailAccountService } from '../email-account.service';
 import { ExtractionService } from '../../extraction/extraction.service';
 import { ComplianceService } from '../../compliance/compliance.service';
 import { OrdersService } from '../../orders/orders.service';
+import { InvoicesService } from '../../invoices/invoices.service';
+import { DocumentsService } from '../../documents/documents.service';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
@@ -54,6 +56,7 @@ function makeEmailAccountServiceMock() {
 function makeExtractionServiceMock() {
     return {
         processFile: jest.fn().mockResolvedValue({
+            documentType: 'purchaseOrder',
             extractedData: {
                 poNumber: 'PO-EMAIL-001',
                 orderDate: '2024-03-15',
@@ -84,6 +87,18 @@ function makeOrdersServiceMock() {
     return {
         saveOrder: jest.fn().mockResolvedValue({ id: 'po-1' }),
     } as unknown as OrdersService;
+}
+
+function makeInvoicesServiceMock() {
+    return {
+        saveInvoice: jest.fn().mockResolvedValue({ id: 'inv-1' }),
+    } as unknown as InvoicesService;
+}
+
+function makeDocumentsServiceMock() {
+    return {
+        saveDocument: jest.fn().mockResolvedValue({ id: 'doc-1' }),
+    } as unknown as DocumentsService;
 }
 
 function makeComplianceServiceMock() {
@@ -170,6 +185,8 @@ describe('EmailIngestionService', () => {
     let extractionService: ExtractionService;
     let complianceService: ComplianceService;
     let ordersService: OrdersService;
+    let invoicesService: InvoicesService;
+    let documentsService: DocumentsService;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -181,6 +198,8 @@ describe('EmailIngestionService', () => {
         extractionService = makeExtractionServiceMock();
         complianceService = makeComplianceServiceMock();
         ordersService = makeOrdersServiceMock();
+        invoicesService = makeInvoicesServiceMock();
+        documentsService = makeDocumentsServiceMock();
 
         service = new EmailIngestionService(
             prisma,
@@ -188,6 +207,8 @@ describe('EmailIngestionService', () => {
             extractionService,
             complianceService,
             ordersService,
+            invoicesService,
+            documentsService,
         );
     });
 
@@ -217,9 +238,10 @@ describe('EmailIngestionService', () => {
                 undefined,
                 undefined,
                 undefined,
-                'purchaseOrder',
+                'auto',
             );
             expect(ordersService.saveOrder).toHaveBeenCalled();
+            expect(invoicesService.saveInvoice).not.toHaveBeenCalled();
             expect(prisma.emailAccount.update).toHaveBeenCalledWith(
                 expect.objectContaining({
                     data: expect.objectContaining({ lastProcessedUid: 11, lastSyncStatus: 'OK' }),
@@ -227,11 +249,119 @@ describe('EmailIngestionService', () => {
             );
         });
 
-        it('skips non-PO emails without attachments', async () => {
-            makeImapMock([{ uid: 12, body: Buffer.from('random email') }]);
+        it('processes an invoice email and routes it to the invoice pipeline', async () => {
+            makeImapMock([{ uid: 12, body: Buffer.from('email body') }]);
+            mockedSimpleParser.mockResolvedValue({
+                subject: 'Invoice INV-EMAIL-002',
+                text: 'Please find the attached invoice.',
+                from: { text: 'billing@company.com' },
+                attachments: [
+                    {
+                        filename: 'inv-002.pdf',
+                        contentType: 'application/pdf',
+                        content: Buffer.from('pdf bytes'),
+                    },
+                ],
+            });
+            (extractionService.processFile as jest.Mock).mockResolvedValue({
+                documentType: 'invoice',
+                extractedData: { invoiceNumber: 'INV-EMAIL-002' },
+                confidence: {},
+                avgConfidence: 0.9,
+            });
+
+            const result = await service.syncAccount('acc-1');
+
+            expect(result.processed).toBe(1);
+            expect(result.skipped).toBe(0);
+            expect(extractionService.processFile).toHaveBeenCalledWith(
+                expect.objectContaining({ mimetype: 'application/pdf' }),
+                expect.stringContaining('Invoice INV-EMAIL-002'),
+                undefined,
+                undefined,
+                undefined,
+                'auto',
+            );
+            expect(invoicesService.saveInvoice).toHaveBeenCalledWith(
+                expect.objectContaining({ invoiceNumber: 'INV-EMAIL-002' }),
+                'user-1',
+                undefined,
+                expect.anything(),
+                0.9,
+            );
+            expect(ordersService.saveOrder).not.toHaveBeenCalled();
+        });
+
+        it('processes body-text-only emails without attachments', async () => {
+            makeImapMock([{ uid: 12, body: Buffer.from('email body') }]);
+            mockedSimpleParser.mockResolvedValue({
+                subject: 'Quote for new fittings',
+                text: 'Please review the quote below and confirm the order.',
+                from: { text: 'sales@company.com' },
+                attachments: [],
+            });
+            (extractionService.processFile as jest.Mock).mockResolvedValue({
+                documentType: 'purchaseOrder',
+                extractedData: { poNumber: 'PO-TEXT-003' },
+                confidence: {},
+                avgConfidence: 0.75,
+            });
+
+            const result = await service.syncAccount('acc-1');
+
+            expect(result.processed).toBe(1);
+            expect(result.skipped).toBe(0);
+            expect(extractionService.processFile).toHaveBeenCalledWith(
+                undefined,
+                expect.stringContaining('Quote for new fittings'),
+                undefined,
+                undefined,
+                undefined,
+                'auto',
+            );
+            expect(ordersService.saveOrder).toHaveBeenCalled();
+        });
+
+        it('routes a receipt to the generic document pipeline', async () => {
+            makeImapMock([{ uid: 14, body: Buffer.from('email body') }]);
+            mockedSimpleParser.mockResolvedValue({
+                subject: 'Receipt for your payment',
+                text: 'Thank you for your payment.',
+                from: { text: 'payments@company.com' },
+                attachments: [
+                    {
+                        filename: 'receipt.pdf',
+                        contentType: 'application/pdf',
+                        content: Buffer.from('pdf bytes'),
+                    },
+                ],
+            });
+            (extractionService.processFile as jest.Mock).mockResolvedValue({
+                documentType: 'receipt',
+                extractedData: { merchantName: 'Acme Co' },
+                confidence: {},
+                avgConfidence: 0.8,
+            });
+
+            const result = await service.syncAccount('acc-1');
+
+            expect(result.processed).toBe(1);
+            expect(documentsService.saveDocument).toHaveBeenCalledWith(
+                'receipt',
+                expect.objectContaining({ merchantName: 'Acme Co' }),
+                'user-1',
+                expect.anything(),
+                0.8,
+            );
+            expect(invoicesService.saveInvoice).not.toHaveBeenCalled();
+            expect(ordersService.saveOrder).not.toHaveBeenCalled();
+        });
+
+        it('skips emails with no body text and no document attachments', async () => {
+            makeImapMock([{ uid: 15, body: Buffer.from('random email') }]);
             mockedSimpleParser.mockResolvedValue({
                 subject: 'Weekly team update',
-                text: 'Here is the agenda.',
+                text: '',
                 from: { text: 'team@company.com' },
                 attachments: [],
             });

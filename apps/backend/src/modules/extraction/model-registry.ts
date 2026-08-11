@@ -1,11 +1,12 @@
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel } from 'ai';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ModelProviderName = 'groq' | 'openai' | 'anthropic';
+export type ModelProviderName = 'openrouter' | 'groq' | 'openai' | 'anthropic';
 
 export interface ModelDescriptor {
     provider: ModelProviderName;
@@ -26,6 +27,16 @@ export interface ModelDescriptor {
  * ExtractionService — that's the entire point of this file.
  */
 export const MODEL_REGISTRY = {
+    'openrouter:nemotron-nano-12b-v2-vl-free': {
+        provider: 'openrouter',
+        modelId: 'nvidia/nemotron-nano-12b-v2-vl:free',
+        supportsVision: true,
+    },
+    'openrouter:gemma-4-26b-a4b-it-free': {
+        provider: 'openrouter',
+        modelId: 'google/gemma-4-26b-a4b-it:free',
+        supportsVision: true,
+    },
     'groq:llama-4-scout': {
         provider: 'groq',
         modelId: 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -35,6 +46,21 @@ export const MODEL_REGISTRY = {
         provider: 'groq',
         modelId: 'llama-3.3-70b-versatile',
         supportsVision: false,
+    },
+    'groq:compound-mini': {
+        provider: 'groq',
+        modelId: 'groq/compound-mini',
+        supportsVision: false,
+    },
+    'groq:compound': {
+        provider: 'groq',
+        modelId: 'groq/compound',
+        supportsVision: false,
+    },
+    'groq:qwen3.6-27b': {
+        provider: 'groq',
+        modelId: 'qwen/qwen3.6-27b',
+        supportsVision: true,
     },
     'openai:gpt-4o': {
         provider: 'openai',
@@ -51,7 +77,7 @@ export const MODEL_REGISTRY = {
 export type ModelKey = keyof typeof MODEL_REGISTRY;
 
 /** The model used when nothing else is configured — today's behavior, unchanged. */
-export const DEFAULT_MODEL_KEY: ModelKey = 'groq:llama-4-scout';
+export const DEFAULT_MODEL_KEY: ModelKey = 'openrouter:nemotron-nano-12b-v2-vl-free';
 
 export function getModelDescriptor(key: ModelKey): ModelDescriptor {
     return MODEL_REGISTRY[key];
@@ -70,6 +96,8 @@ export function resolveModel(key: ModelKey, apiKeyOverride?: string): LanguageMo
     const descriptor = MODEL_REGISTRY[key];
 
     switch (descriptor.provider) {
+        case 'openrouter':
+            return createOpenRouter({ apiKey: apiKeyOverride ?? process.env.OPENROUTER_API_KEY })(descriptor.modelId);
         case 'groq':
             return createGroq({ apiKey: apiKeyOverride ?? process.env.GROQ_API_KEY })(descriptor.modelId);
         case 'openai':

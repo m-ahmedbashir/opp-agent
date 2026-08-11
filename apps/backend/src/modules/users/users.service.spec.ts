@@ -51,7 +51,7 @@ describe('UsersService', () => {
 
             expect(settings).toEqual({
                 extractionMode: 'MANUAL_REVIEW',
-                modelKey: 'groq:llama-4-scout',
+                modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
                 processingMode: 'vision',
                 hasApiKey: false,
             });
@@ -74,7 +74,7 @@ describe('UsersService', () => {
         it('reports hasApiKey=true but never returns the encrypted value itself', async () => {
             const prisma = makePrismaMock({
                 extractionMode: 'MANUAL_REVIEW',
-                modelKey: 'groq:llama-4-scout',
+                modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
                 processingMode: 'vision',
                 encryptedApiKey: 'encrypted(sk-real-secret-value)',
             });
@@ -99,7 +99,7 @@ describe('UsersService', () => {
                 expect.objectContaining({
                     create: expect.objectContaining({
                         extractionMode: 'AUTO_APPROVE',
-                        modelKey: 'groq:llama-4-scout', // untouched field defaults, doesn't come back as undefined
+                        modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free', // untouched field defaults, doesn't come back as undefined
                         processingMode: 'vision',
                     }),
                 }),
@@ -152,7 +152,7 @@ describe('UsersService', () => {
 
                 expect(result).toEqual({
                     extractionMode: 'MANUAL_REVIEW',
-                    modelKey: 'groq:llama-4-scout',
+                    modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
                     processingMode: 'vision',
                     updatedAt: expect.any(Date),
                     hasApiKey: true,
@@ -162,7 +162,7 @@ describe('UsersService', () => {
             it('clears a saved key when apiKey is an empty string', async () => {
                 const prisma = makePrismaMock({
                     extractionMode: 'MANUAL_REVIEW',
-                    modelKey: 'groq:llama-4-scout',
+                    modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
                     encryptedApiKey: 'encrypted(sk-old-key)',
                 });
                 const service = new UsersService(prisma, encryptionService);
@@ -178,7 +178,7 @@ describe('UsersService', () => {
             it('leaves a saved key untouched when apiKey is omitted entirely', async () => {
                 const prisma = makePrismaMock({
                     extractionMode: 'MANUAL_REVIEW',
-                    modelKey: 'groq:llama-4-scout',
+                    modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
                     encryptedApiKey: 'encrypted(sk-old-key)',
                 });
                 const service = new UsersService(prisma, encryptionService);

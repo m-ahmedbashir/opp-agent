@@ -10,5 +10,6 @@ import { UsersModule } from '../users/users.module';
     imports: [CatalogModule, ExtractionModule, PrismaModule, UsersModule],
     providers: [OrdersService],
     controllers: [OrdersController],
+    exports: [OrdersService],
 })
 export class OrdersModule {}

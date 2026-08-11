@@ -47,6 +47,10 @@ jest.mock('ai', () => ({
 
 // Each provider mock returns a distinguishable string so tests can assert on
 // exactly which model the registry resolved to, without needing a real SDK.
+jest.mock('@openrouter/ai-sdk-provider', () => ({
+    createOpenRouter: jest.fn().mockReturnValue(jest.fn((modelId: string) => `openrouter-model:${modelId}`)),
+}));
+
 jest.mock('@ai-sdk/groq', () => ({
     createGroq: jest.fn().mockReturnValue(jest.fn((modelId: string) => `groq-model:${modelId}`)),
 }));
@@ -82,6 +86,7 @@ jest.mock('tesseract.js', () => ({
 
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { PDFParse } from 'pdf-parse';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -351,12 +356,12 @@ describe('ExtractionService', () => {
     });
 
     describe('processFile() — model registry', () => {
-        it('resolves the default model (groq:llama-4-scout) when no modelKey is configured', async () => {
+        it('resolves the default model (openrouter:nemotron-nano-12b-v2-vl-free) when no modelKey is configured', async () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file);
 
             const callArgs = (generateObject as jest.Mock).mock.calls[0][0];
-            expect(callArgs.model).toBe('groq-model:meta-llama/llama-4-scout-17b-16e-instruct');
+            expect(callArgs.model).toBe('openrouter-model:nvidia/nemotron-nano-12b-v2-vl:free');
         });
 
         it('resolves a different registry entry when the service is configured with a different modelKey', async () => {
@@ -490,7 +495,7 @@ describe('ExtractionService', () => {
 
     describe('processFile() — per-request modelKey override (Phase 2)', () => {
         it('uses the per-request modelKey instead of the instance default when one is provided', async () => {
-            // service defaults to groq:llama-4-scout (no constructor override)
+            // service defaults to openrouter:nemotron-nano-12b-v2-vl-free (no constructor override)
             const file = makeFile('Total: 500 USD', 'text/plain');
 
             await service.processFile(file, undefined, 'openai:gpt-4o');
@@ -505,7 +510,7 @@ describe('ExtractionService', () => {
             await service.processFile(file, undefined, 'not-a-real-model');
 
             const callArgs = (generateObject as jest.Mock).mock.calls[0][0];
-            expect(callArgs.model).toBe('groq-model:meta-llama/llama-4-scout-17b-16e-instruct');
+            expect(callArgs.model).toBe('openrouter-model:nvidia/nemotron-nano-12b-v2-vl:free');
         });
 
         it('still applies the vision-capability guard to a per-request override, not just the instance default', async () => {
@@ -523,16 +528,16 @@ describe('ExtractionService', () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file);
 
-            const createGroqArgs = (createGroq as jest.Mock).mock.calls.at(-1)![0];
-            expect(createGroqArgs.apiKey).toBe(process.env.GROQ_API_KEY);
+            const createOpenRouterArgs = (createOpenRouter as jest.Mock).mock.calls.at(-1)![0];
+            expect(createOpenRouterArgs.apiKey).toBe(process.env.OPENROUTER_API_KEY);
         });
 
         it("passes the caller's decrypted key straight to the provider SDK instead of the app's shared key", async () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file, undefined, undefined, 'sk-users-own-decrypted-key');
 
-            const createGroqArgs = (createGroq as jest.Mock).mock.calls.at(-1)![0];
-            expect(createGroqArgs.apiKey).toBe('sk-users-own-decrypted-key');
+            const createOpenRouterArgs = (createOpenRouter as jest.Mock).mock.calls.at(-1)![0];
+            expect(createOpenRouterArgs.apiKey).toBe('sk-users-own-decrypted-key');
         });
 
         it('never includes the apiKeyOverride in the thrown error message if the model call fails', async () => {
