@@ -2,12 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PurchaseOrderConfidenceSchema = exports.PurchaseOrderSchema = exports.LineItemSchema = void 0;
 const zod_1 = require("zod");
+/**
+ * What the extraction model actually produces per line item. Deliberately
+ * excludes matchedSystemSku/skuMatchScore — those describe a match against
+ * *our* internal product catalog, which the model is never shown, so asking
+ * it to fill them in only invites a confident-sounding guess (seen in
+ * practice: "Hex Bolt 10mm Pack" matched to a stainless steel pipe SKU at
+ * 100% "confidence"). That matching is entirely ProductCatalogService's job,
+ * computed fresh in OrdersService.saveOrder() every time an order is saved —
+ * matchedSystemSku/skuMatchScore only exist on the persisted/returned record
+ * shape (OrderLineItemRecord on the backend, SavedLineItem on the frontend),
+ * never on what the model is asked to produce.
+ */
 exports.LineItemSchema = zod_1.z.object({
     lineNumber: zod_1.z.number().describe('Line item number / position in the PO'),
     rawDescription: zod_1.z.string().describe('Raw item description as written on the purchase order'),
-    customerSku: zod_1.z.string().nullable().describe('Customer SKU or part number, or null if not present'),
-    matchedSystemSku: zod_1.z.string().nullable().describe('System-matched SKU, or null if no match'),
-    skuMatchScore: zod_1.z.number().min(0).max(1).describe('Confidence score 0.0-1.0 for the SKU match'),
+    customerSku: zod_1.z.string().nullable().describe('SKU or part number the customer themselves wrote on the PO, or null if none is stated'),
     quantity: zod_1.z.number().describe('Quantity ordered'),
     unitPrice: zod_1.z.number().nullable().describe('Unit price, or null if not found'),
     totalAmount: zod_1.z.number().nullable().describe('Total line amount, or null if not found'),

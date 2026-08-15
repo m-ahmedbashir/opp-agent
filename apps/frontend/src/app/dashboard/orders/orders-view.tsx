@@ -52,7 +52,9 @@ function LineItemRow({
         <div className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
             <div className="flex items-center justify-between">
                 <span className="font-semibold">Line {item.lineNumber}</span>
-                {matched ? (
+                {item.skuMatchSource === 'manual' ? (
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 hover:bg-blue-100">Manually set</Badge>
+                ) : matched ? (
                     <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 hover:bg-green-100">Auto-matched SKU</Badge>
                 ) : (
                     <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400 hover:bg-yellow-100">Review needed</Badge>
@@ -72,26 +74,25 @@ function LineItemRow({
             </div>
             <div className="mt-1 flex items-center gap-2">
                 <span className="text-xs text-muted-foreground shrink-0">System SKU:</span>
-                {matched ? (
-                    <span className="font-medium text-green-700 dark:text-green-400">{item.matchedSystemSku}</span>
-                ) : (
-                    <Select
-                        disabled={updating || !catalog}
-                        value={item.matchedSystemSku ?? ''}
-                        onValueChange={(sku) => updateSku({ orderId: order.id, lineItemId: item.id, matchedSystemSku: sku })}
-                    >
-                        <SelectTrigger className="h-8 text-xs flex-1">
-                            <SelectValue placeholder="Select matching SKU..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {catalog?.map((product) => (
-                                <SelectItem key={product.sku} value={product.sku} className="text-xs">
-                                    {product.sku} — {product.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
+                {/* Always editable, even on a high-confidence match — auto-matching
+                    can be confidently wrong, so the user needs a way to correct it,
+                    not just accept it when the score happens to clear the threshold. */}
+                <Select
+                    disabled={updating || !catalog}
+                    value={item.matchedSystemSku ?? ''}
+                    onValueChange={(sku) => updateSku({ orderId: order.id, lineItemId: item.id, matchedSystemSku: sku })}
+                >
+                    <SelectTrigger className={`h-8 text-xs flex-1 ${item.skuMatchSource === 'manual' ? 'text-blue-700 dark:text-blue-400' : matched ? 'text-green-700 dark:text-green-400' : ''}`}>
+                        <SelectValue placeholder="Select matching SKU..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {catalog?.map((product) => (
+                            <SelectItem key={product.sku} value={product.sku} className="text-xs">
+                                {product.sku} — {product.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
     );

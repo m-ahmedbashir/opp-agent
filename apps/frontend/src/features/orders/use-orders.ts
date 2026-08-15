@@ -44,6 +44,8 @@ export interface SavedLineItem {
     customerSku: string | null;
     matchedSystemSku: string | null;
     skuMatchScore: number;
+    /** "auto" = catalog algorithm matched it, "manual" = the user picked it via the override dropdown. */
+    skuMatchSource: 'auto' | 'manual';
     quantity: number;
     unitPrice: number | null;
     totalAmount: number | null;

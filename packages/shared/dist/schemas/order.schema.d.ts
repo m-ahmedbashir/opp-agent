@@ -1,10 +1,20 @@
 import { z } from 'zod';
+/**
+ * What the extraction model actually produces per line item. Deliberately
+ * excludes matchedSystemSku/skuMatchScore — those describe a match against
+ * *our* internal product catalog, which the model is never shown, so asking
+ * it to fill them in only invites a confident-sounding guess (seen in
+ * practice: "Hex Bolt 10mm Pack" matched to a stainless steel pipe SKU at
+ * 100% "confidence"). That matching is entirely ProductCatalogService's job,
+ * computed fresh in OrdersService.saveOrder() every time an order is saved —
+ * matchedSystemSku/skuMatchScore only exist on the persisted/returned record
+ * shape (OrderLineItemRecord on the backend, SavedLineItem on the frontend),
+ * never on what the model is asked to produce.
+ */
 export declare const LineItemSchema: z.ZodObject<{
     lineNumber: z.ZodNumber;
     rawDescription: z.ZodString;
     customerSku: z.ZodNullable<z.ZodString>;
-    matchedSystemSku: z.ZodNullable<z.ZodString>;
-    skuMatchScore: z.ZodNumber;
     quantity: z.ZodNumber;
     unitPrice: z.ZodNullable<z.ZodNumber>;
     totalAmount: z.ZodNullable<z.ZodNumber>;
@@ -23,8 +33,6 @@ export declare const PurchaseOrderSchema: z.ZodObject<{
         lineNumber: z.ZodNumber;
         rawDescription: z.ZodString;
         customerSku: z.ZodNullable<z.ZodString>;
-        matchedSystemSku: z.ZodNullable<z.ZodString>;
-        skuMatchScore: z.ZodNumber;
         quantity: z.ZodNumber;
         unitPrice: z.ZodNullable<z.ZodNumber>;
         totalAmount: z.ZodNullable<z.ZodNumber>;

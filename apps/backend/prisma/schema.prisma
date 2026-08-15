@@ -95,6 +95,11 @@ model OrderLineItem {
   customerSku      String?
   matchedSystemSku String?
   skuMatchScore    Float    @default(0)
+  // "auto" = ProductCatalogService matched it, "manual" = the user picked it
+  // via the override dropdown. Needed because a manual pick also gets
+  // skuMatchScore 1.0 — without this, the UI can't tell an algorithmic
+  // "Auto-matched SKU" apart from a user's own correction.
+  skuMatchSource   String   @default("auto")
   quantity         Int
   unitPrice        Float?
   totalAmount      Float?

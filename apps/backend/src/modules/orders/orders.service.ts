@@ -1,9 +1,17 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ExtractionService } from '../extraction/extraction.service';
 import type { ExtractionResult } from '../extraction/extraction.service';
 import { ProductCatalogService } from '../catalog/catalog.service';
 import type { PurchaseOrder, PurchaseOrderConfidence } from '@opp/shared';
+
+export interface PendingRevision {
+    data: PurchaseOrder;
+    confidence: PurchaseOrderConfidence | null;
+    avgConfidence: number | null;
+    receivedAt: string;
+}
 
 export interface ExtractAndSaveOrderResult {
     extraction: ExtractionResult;
@@ -35,6 +43,8 @@ export interface OrderLineItemRecord {
     customerSku: string | null;
     matchedSystemSku: string | null;
     skuMatchScore: number;
+    /** "auto" = ProductCatalogService matched it, "manual" = the user picked it via the override dropdown. */
+    skuMatchSource: 'auto' | 'manual';
     quantity: number;
     unitPrice: number | null;
     totalAmount: number | null;
@@ -129,6 +139,7 @@ export class OrdersService {
                             customerSku: item.customerSku ?? null,
                             matchedSystemSku: match.matchedSku,
                             skuMatchScore: match.score,
+                            skuMatchSource: 'auto',
                             quantity: Math.round(item.quantity),
                             unitPrice: item.unitPrice,
                             totalAmount: item.totalAmount,
@@ -200,7 +211,7 @@ export class OrdersService {
 
         await this.prisma.orderLineItem.update({
             where: { id: lineItemId },
-            data: { matchedSystemSku, skuMatchScore: 1.0 },
+            data: { matchedSystemSku, skuMatchScore: 1.0, skuMatchSource: 'manual' },
         });
 
         const updated = await this.prisma.purchaseOrder.findUnique({
@@ -221,6 +232,7 @@ export class OrdersService {
                 customerSku: item.customerSku,
                 matchedSystemSku: item.matchedSystemSku,
                 skuMatchScore: item.skuMatchScore,
+                skuMatchSource: item.skuMatchSource,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 totalAmount: item.totalAmount,

@@ -81,7 +81,7 @@ export const DOCUMENT_TYPE_REGISTRY = {
         schema: buildResponseSchema(PurchaseOrderSchema, PurchaseOrderConfidenceSchema),
         prompt: buildExtractionPrompt(
             'You are a purchase order processing assistant. Extract the purchase order data from the document and populate every field you can find.',
-            'For lineItems, infer lineNumber starting from 1. Populate matchedSystemSku and skuMatchScore only when a system SKU is clearly stated in the document; otherwise leave matchedSystemSku null and skuMatchScore 0.',
+            'For lineItems, infer lineNumber starting from 1. customerSku is the SKU or part number the customer themselves wrote on the PO, if any — leave it null if the document does not state one. Do not attempt to match items against any internal product catalog; that is handled separately, not by you.',
         ),
     },
     receipt: {

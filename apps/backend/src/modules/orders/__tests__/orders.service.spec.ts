@@ -105,8 +105,6 @@ describe('OrdersService', () => {
                 lineNumber: 1,
                 rawDescription: 'Centrifugal pump 5 HP for water system',
                 customerSku: 'CP-5HP',
-                matchedSystemSku: null,
-                skuMatchScore: 0,
                 quantity: 2,
                 unitPrice: 1000,
                 totalAmount: 2000,
@@ -115,8 +113,6 @@ describe('OrdersService', () => {
                 lineNumber: 2,
                 rawDescription: 'Carbon steel pipe 4 inch schedule 40',
                 customerSku: null,
-                matchedSystemSku: null,
-                skuMatchScore: 0,
                 quantity: 10,
                 unitPrice: 45,
                 totalAmount: 450,
@@ -215,6 +211,14 @@ describe('OrdersService', () => {
 
             expect(updated.lineItems[0].matchedSystemSku).toBe('VALVE-BV-6IN');
             expect(updated.lineItems[0].skuMatchScore).toBe(1);
+        });
+
+        it("marks the line item's match source as 'manual', not 'auto' — a user override must never be labeled as if the algorithm did it", async () => {
+            const saved = await service.saveOrder(sampleOrder, 'user-1');
+            expect(saved.lineItems[0].skuMatchSource).toBe('auto');
+
+            const updated = await service.updateLineItemSku('po-1', 'li-1', 'VALVE-BV-6IN');
+            expect(updated.lineItems[0].skuMatchSource).toBe('manual');
         });
 
         it('throws NotFoundException when the order does not exist', async () => {
