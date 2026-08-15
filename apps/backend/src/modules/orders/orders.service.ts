@@ -78,22 +78,10 @@ export class OrdersService {
         const orderData = extraction.extractedData as PurchaseOrder;
         const confidence = extraction.confidence as PurchaseOrderConfidence;
 
-        // Post-process line items: run each raw description through the catalog matcher.
-        const enrichedLineItems = orderData.lineItems.map((item) => {
-            const match = this.catalogService.matchSku(item.rawDescription);
-            return {
-                ...item,
-                matchedSystemSku: match.matchedSku,
-                skuMatchScore: match.score,
-            };
-        });
-
-        const enrichedOrder: PurchaseOrder = {
-            ...orderData,
-            lineItems: enrichedLineItems,
-        };
-
-        const savedOrder = await this.saveOrder(enrichedOrder, userId, confidence, extraction.avgConfidence);
+        // SKU matching happens inside saveOrder() itself now — every caller
+        // (this one, and EmailIngestionService's direct saveOrder() call) gets
+        // it automatically instead of each having to remember to run it.
+        const savedOrder = await this.saveOrder(orderData, userId, confidence, extraction.avgConfidence);
 
         return {
             extraction,
@@ -129,16 +117,23 @@ export class OrdersService {
                 fieldConfidence: fieldConfidence ? (fieldConfidence as any) : undefined,
                 avgConfidence: avgConfidence ?? undefined,
                 lineItems: {
-                    create: orderData.lineItems.map((item) => ({
-                        lineNumber: item.lineNumber,
-                        rawDescription: item.rawDescription,
-                        customerSku: item.customerSku ?? null,
-                        matchedSystemSku: item.matchedSystemSku,
-                        skuMatchScore: item.skuMatchScore,
-                        quantity: Math.round(item.quantity),
-                        unitPrice: item.unitPrice,
-                        totalAmount: item.totalAmount,
-                    })),
+                    // Every caller gets SKU matching against the catalog here —
+                    // it must not be something each caller has to remember to do
+                    // itself (that's exactly how the email-ingestion path ended
+                    // up saving orders with no SKU matches at all).
+                    create: orderData.lineItems.map((item) => {
+                        const match = this.catalogService.matchSku(item.rawDescription);
+                        return {
+                            lineNumber: item.lineNumber,
+                            rawDescription: item.rawDescription,
+                            customerSku: item.customerSku ?? null,
+                            matchedSystemSku: match.matchedSku,
+                            skuMatchScore: match.score,
+                            quantity: Math.round(item.quantity),
+                            unitPrice: item.unitPrice,
+                            totalAmount: item.totalAmount,
+                        };
+                    }),
                 },
             },
             include: { lineItems: true },

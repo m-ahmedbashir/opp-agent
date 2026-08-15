@@ -183,6 +183,16 @@ describe('OrdersService', () => {
             expect(result.lineItems).toHaveLength(2);
             expect(result.avgConfidence).toBe(0.85);
         });
+
+        it('runs SKU matching itself, even when called directly (not via extractAndSaveOrder) — this is exactly the path EmailIngestionService uses', async () => {
+            const result = await service.saveOrder(sampleOrder, 'user-1');
+
+            expect(catalogService.matchSku).toHaveBeenCalledTimes(2);
+            expect(result.lineItems[0].matchedSystemSku).toBe('PUMP-CENT-5HP');
+            expect(result.lineItems[0].skuMatchScore).toBe(0.92);
+            expect(result.lineItems[1].matchedSystemSku).toBe('PIPE-CS-4IN');
+            expect(result.lineItems[1].skuMatchScore).toBe(0.88);
+        });
     });
 
     describe('approveOrder()', () => {

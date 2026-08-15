@@ -53,6 +53,9 @@ importers:
       ai:
         specifier: ^6.0.116
         version: 6.0.116(zod@4.3.6)
+      cron:
+        specifier: 4.4.0
+        version: 4.4.0
       imap:
         specifier: ^0.8.19
         version: 0.8.19

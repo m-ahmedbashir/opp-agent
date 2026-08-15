@@ -7,6 +7,7 @@ import { OrdersService } from '../../orders/orders.service';
 import { InvoicesService } from '../../invoices/invoices.service';
 import { DocumentsService } from '../../documents/documents.service';
 import { UsersService } from '../../users/users.service';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
@@ -116,6 +117,12 @@ function makeUsersServiceMock() {
     } as unknown as UsersService;
 }
 
+function makeSchedulerRegistryMock() {
+    return {
+        addCronJob: jest.fn(),
+    } as unknown as SchedulerRegistry;
+}
+
 interface MockMessage {
     uid: number;
     body: Buffer;
@@ -197,6 +204,7 @@ describe('EmailIngestionService', () => {
     let invoicesService: InvoicesService;
     let documentsService: DocumentsService;
     let usersService: UsersService;
+    let schedulerRegistry: SchedulerRegistry;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -217,6 +225,7 @@ describe('EmailIngestionService', () => {
         invoicesService = makeInvoicesServiceMock();
         documentsService = makeDocumentsServiceMock();
         usersService = makeUsersServiceMock();
+        schedulerRegistry = makeSchedulerRegistryMock();
 
         service = new EmailIngestionService(
             prisma,
@@ -227,6 +236,7 @@ describe('EmailIngestionService', () => {
             invoicesService,
             documentsService,
             usersService,
+            schedulerRegistry,
         );
     });
 

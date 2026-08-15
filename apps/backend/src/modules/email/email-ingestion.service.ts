@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EmailAccountService } from './email-account.service';
 import { ExtractionService } from '../extraction/extraction.service';
@@ -19,8 +20,20 @@ import { simpleParser, ParsedMail } from 'mailparser';
  * resume, etc.). No keyword pre-filtering — the model decides what is actionable.
  */
 @Injectable()
-export class EmailIngestionService {
+export class EmailIngestionService implements OnModuleInit {
     private readonly logger = new Logger(EmailIngestionService.name);
+
+    /**
+     * Standard 5-or-6-field cron expression (seconds field optional — see the
+     * `cron` package). Override via EMAIL_SYNC_CRON_EXPRESSION in .env to change
+     * the sync cadence without a code change, e.g. '*\/10 * * * * *' for every
+     * 10 seconds while testing, or '*\/5 * * * *' for every 5 minutes in
+     * production. Read in onModuleInit(), not a @Cron() decorator argument —
+     * decorator arguments evaluate at import time, before ConfigModule.forRoot()
+     * has loaded .env in this app's module order, so process.env would read as
+     * undefined there regardless of what's actually in .env.
+     */
+    private static readonly DEFAULT_SYNC_CRON_EXPRESSION = CronExpression.EVERY_5_MINUTES;
 
     /**
      * Each message that has extractable content triggers a synchronous LLM
@@ -39,7 +52,7 @@ export class EmailIngestionService {
      * configured model was unreliable. Flip back to false once fetching is
      * confirmed solid and you want extraction running again.
      */
-    private static readonly DEBUG_FETCH_ONLY = true;
+    private static readonly DEBUG_FETCH_ONLY = false;
 
     constructor(
         private readonly prisma: PrismaService,
@@ -50,13 +63,22 @@ export class EmailIngestionService {
         private readonly invoicesService: InvoicesService,
         private readonly documentsService: DocumentsService,
         private readonly usersService: UsersService,
+        private readonly schedulerRegistry: SchedulerRegistry,
     ) {}
 
+    onModuleInit(): void {
+        const cronExpression = process.env.EMAIL_SYNC_CRON_EXPRESSION || EmailIngestionService.DEFAULT_SYNC_CRON_EXPRESSION;
+        const job = new CronJob(cronExpression, () => this.syncAll());
+        this.schedulerRegistry.addCronJob('email-sync', job);
+        job.start();
+        this.logger.log(`Email sync cron scheduled: '${cronExpression}'${process.env.EMAIL_SYNC_CRON_EXPRESSION ? ' (from EMAIL_SYNC_CRON_EXPRESSION)' : ' (default)'}.`);
+    }
+
     /**
-     * Called automatically every 5 minutes. Pulls all enabled accounts and
-     * ingests any new messages since the last processed UID.
+     * Called automatically on the schedule set by EMAIL_SYNC_CRON_EXPRESSION
+     * (see onModuleInit()). Pulls all enabled accounts and ingests any new
+     * messages since each account's last processed UID.
      */
-    @Cron(CronExpression.EVERY_5_MINUTES)
     async syncAll(): Promise<void> {
         const accounts = await this.prisma.emailAccount.findMany({
             where: { enabled: true },

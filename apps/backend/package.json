@@ -36,6 +36,7 @@
     "@opp/shared": "workspace:*",
     "@prisma/client": "^6.19.3",
     "ai": "^6.0.116",
+    "cron": "4.4.0",
     "imap": "^0.8.19",
     "mailparser": "^3.9.15",
     "nestjs-zod": "^5.1.1",
