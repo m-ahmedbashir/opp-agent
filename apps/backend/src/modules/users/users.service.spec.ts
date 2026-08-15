@@ -43,7 +43,7 @@ describe('UsersService', () => {
     });
 
     describe('getSettings()', () => {
-        it('returns defaults (MANUAL_REVIEW + groq:llama-4-scout + vision + no key) when the user does not exist yet', async () => {
+        it('returns defaults (MANUAL_REVIEW + the app default model + vision + no key) when the user does not exist yet', async () => {
             const prisma = makePrismaMock(null);
             const service = new UsersService(prisma, encryptionService);
 
@@ -51,7 +51,7 @@ describe('UsersService', () => {
 
             expect(settings).toEqual({
                 extractionMode: 'MANUAL_REVIEW',
-                modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
+                modelKey: 'google:gemini-3.1-flash-lite',
                 processingMode: 'vision',
                 hasApiKey: false,
             });
@@ -99,7 +99,7 @@ describe('UsersService', () => {
                 expect.objectContaining({
                     create: expect.objectContaining({
                         extractionMode: 'AUTO_APPROVE',
-                        modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free', // untouched field defaults, doesn't come back as undefined
+                        modelKey: 'google:gemini-3.1-flash-lite', // untouched field defaults, doesn't come back as undefined
                         processingMode: 'vision',
                     }),
                 }),
@@ -152,7 +152,7 @@ describe('UsersService', () => {
 
                 expect(result).toEqual({
                     extractionMode: 'MANUAL_REVIEW',
-                    modelKey: 'openrouter:nemotron-nano-12b-v2-vl-free',
+                    modelKey: 'google:gemini-3.1-flash-lite',
                     processingMode: 'vision',
                     updatedAt: expect.any(Date),
                     hasApiKey: true,

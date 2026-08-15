@@ -6,7 +6,7 @@ import { ComplianceService } from '../compliance/compliance.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { Invoice, InvoiceConfidence, Receipt, ReceiptConfidence, Resume, ResumeConfidence, PurchaseOrder, PurchaseOrderConfidence } from '@opp/shared';
 import {
-    DEFAULT_MODEL_KEY,
+    getDefaultModelKey,
     DEFAULT_PROCESSING_MODE,
     MODEL_REGISTRY,
     isProcessingMode,
@@ -99,7 +99,7 @@ export class ExtractionService {
          * @Optional() so Nest's DI doesn't try to resolve a provider for a
          * plain string-literal type and instead lets the default value apply.
          */
-        @Optional() private readonly modelKey: ModelKey = DEFAULT_MODEL_KEY,
+        @Optional() private readonly modelKey: ModelKey = getDefaultModelKey(),
         /** A real, DI-registered provider — Nest resolves this normally, no @Optional() needed. */
         private readonly ocrService?: OcrService,
         /** Same @Optional() reasoning as modelKey — a plain string-literal type. */

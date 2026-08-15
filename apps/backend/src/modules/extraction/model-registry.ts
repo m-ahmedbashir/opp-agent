@@ -24,8 +24,8 @@ export interface ModelDescriptor {
 
 /**
  * Every model the extraction pipeline can be pointed at. Swapping the default
- * model is a one-line change to DEFAULT_MODEL_KEY below, not a code change to
- * ExtractionService — that's the entire point of this file.
+ * model is a DEFAULT_MODEL_KEY env var (see getDefaultModelKey() below), not
+ * a code change to ExtractionService — that's the entire point of this file.
  */
 export const MODEL_REGISTRY = {
     'openrouter:nemotron-nano-12b-v2-vl-free': {
@@ -85,8 +85,27 @@ export const MODEL_REGISTRY = {
 
 export type ModelKey = keyof typeof MODEL_REGISTRY;
 
-/** The model used when nothing else is configured — today's behavior, unchanged. */
-export const DEFAULT_MODEL_KEY: ModelKey = 'openrouter:nemotron-nano-12b-v2-vl-free';
+/** Used only if DEFAULT_MODEL_KEY is unset or not a real registry key — see getDefaultModelKey(). */
+const FALLBACK_MODEL_KEY: ModelKey = 'google:gemini-3.1-flash-lite';
+
+/**
+ * The model used when nothing else is configured. Reads DEFAULT_MODEL_KEY
+ * from .env on every call rather than caching it in a module-level constant —
+ * a top-level `export const X = process.env.Y` here would be evaluated at
+ * import time, before ConfigModule.forRoot() has loaded .env in this app's
+ * module order (same issue that bit EMAIL_SYNC_CRON_EXPRESSION), so it would
+ * silently always read as undefined regardless of what .env actually says.
+ * Every call site (ExtractionService's constructor default param,
+ * UsersService's getSettings/updateSettings) must call this function, not
+ * reference a cached constant.
+ */
+export function getDefaultModelKey(): ModelKey {
+    const configured = process.env.DEFAULT_MODEL_KEY;
+    if (configured && configured in MODEL_REGISTRY) {
+        return configured as ModelKey;
+    }
+    return FALLBACK_MODEL_KEY;
+}
 
 export function getModelDescriptor(key: ModelKey): ModelDescriptor {
     return MODEL_REGISTRY[key];

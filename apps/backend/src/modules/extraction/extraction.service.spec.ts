@@ -95,6 +95,7 @@ jest.mock('tesseract.js', () => ({
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { PDFParse } from 'pdf-parse';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -364,12 +365,12 @@ describe('ExtractionService', () => {
     });
 
     describe('processFile() — model registry', () => {
-        it('resolves the default model (openrouter:nemotron-nano-12b-v2-vl-free) when no modelKey is configured', async () => {
+        it('resolves the default model (google:gemini-3.1-flash-lite) when no modelKey is configured', async () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file);
 
             const callArgs = (generateObject as jest.Mock).mock.calls[0][0];
-            expect(callArgs.model).toBe('openrouter-model:nvidia/nemotron-nano-12b-v2-vl:free');
+            expect(callArgs.model).toBe('google-model:gemini-3.1-flash-lite');
         });
 
         it('resolves a different registry entry when the service is configured with a different modelKey', async () => {
@@ -503,7 +504,7 @@ describe('ExtractionService', () => {
 
     describe('processFile() — per-request modelKey override (Phase 2)', () => {
         it('uses the per-request modelKey instead of the instance default when one is provided', async () => {
-            // service defaults to openrouter:nemotron-nano-12b-v2-vl-free (no constructor override)
+            // service defaults to google:gemini-3.1-flash-lite (no constructor override)
             const file = makeFile('Total: 500 USD', 'text/plain');
 
             await service.processFile(file, undefined, 'openai:gpt-4o');
@@ -518,7 +519,7 @@ describe('ExtractionService', () => {
             await service.processFile(file, undefined, 'not-a-real-model');
 
             const callArgs = (generateObject as jest.Mock).mock.calls[0][0];
-            expect(callArgs.model).toBe('openrouter-model:nvidia/nemotron-nano-12b-v2-vl:free');
+            expect(callArgs.model).toBe('google-model:gemini-3.1-flash-lite');
         });
 
         it('still applies the vision-capability guard to a per-request override, not just the instance default', async () => {
