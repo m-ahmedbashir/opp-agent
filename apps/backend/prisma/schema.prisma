@@ -68,6 +68,14 @@ model PurchaseOrder {
   fieldConfidence  Json?
   avgConfidence    Float?
 
+  // Set when a later extraction produces the same poNumber (for this user)
+  // with different data — e.g. a PO email arriving twice with an updated
+  // total or line items. Rather than creating a second row, the differing
+  // data is parked here so the UI can show "saved vs. new" and the user
+  // decides whether to accept it (see OrdersService.acceptRevision /
+  // dismissRevision). Null when there's no pending revision.
+  pendingRevision  Json?
+
   lineItems        OrderLineItem[]
 
   createdAt        DateTime @default(now())
