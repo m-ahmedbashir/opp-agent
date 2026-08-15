@@ -1,5 +1,5 @@
 import { Injectable, Logger, Optional, UnsupportedMediaTypeException, HttpException, HttpStatus } from '@nestjs/common';
-import { generateObject } from 'ai';
+import { generateObject, NoObjectGeneratedError, APICallError } from 'ai';
 import { z } from 'zod';
 import { PDFParse } from 'pdf-parse';
 import { ComplianceService } from '../compliance/compliance.service';
@@ -22,6 +22,9 @@ import {
     type DocumentTypeKey,
 } from './document-type-registry';
 import { OcrService } from './ocr.service';
+
+/** Bound on a single generateObject() call — see the call sites for why this exists. */
+const MODEL_CALL_TIMEOUT_MS = 30_000;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -251,6 +254,7 @@ export class ExtractionService {
                 documentType = await this.classifyDocumentType(maskedText, mimeTypeToPass, buffersToPass, modelKey, apiKeyOverride);
             } catch (error) {
                 this.logger.warn(`Document-type classification failed, defaulting to '${DEFAULT_DOCUMENT_TYPE}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+                this.logGenerationFailureDetail(error);
                 documentType = DEFAULT_DOCUMENT_TYPE;
             }
         }
@@ -293,6 +297,7 @@ export class ExtractionService {
             // Log the scrubbed message, not the raw error object — an SDK error can carry
             // request details in properties Logger.error() would otherwise print in full.
             this.logger.error(`Failed to extract data via the AI provider: ${errorMessage}`);
+            this.logGenerationFailureDetail(error, apiKeyOverride);
             if (error instanceof Error && error.message.includes('429')) {
                 throw new HttpException('Rate limit exceeded. Please try again in a moment.', HttpStatus.TOO_MANY_REQUESTS);
             }
@@ -481,6 +486,15 @@ Base your answer only on the document content provided below.`;
             model: resolveModel(modelKey, apiKeyOverride),
             schema: z.object({ documentType: z.enum(DOCUMENT_TYPE_KEYS as [DocumentTypeKey, ...DocumentTypeKey[]]) }),
             messages: [{ role: 'user', content: this.buildContentBlocks(prompt, sanitisedText, mimeType, buffers) }],
+            // Free-tier models (the default) occasionally hang instead of
+            // erroring — without a bound, a single stuck call blocks whatever
+            // caller is awaiting it (e.g. the email sync loop) indefinitely.
+            // NOTE: `timeout` is silently a no-op on generateObject() (it's only
+            // wired up inside streamText's implementation in this SDK version,
+            // despite the shared CallSettings type accepting it). abortSignal is
+            // the option this function actually reads.
+            abortSignal: AbortSignal.timeout(MODEL_CALL_TIMEOUT_MS),
+            maxRetries: 1,
         });
 
         return object.documentType;
@@ -515,6 +529,8 @@ Base your answer only on the document content provided below.`;
             model: resolveModel(modelKey, apiKeyOverride),
             schema: descriptor.schema,
             messages: [{ role: 'user', content: this.buildContentBlocks(descriptor.prompt, sanitisedText, mimeType, buffers) }],
+            abortSignal: AbortSignal.timeout(MODEL_CALL_TIMEOUT_MS),
+            maxRetries: 1,
         })) as { object: { data: unknown; confidence: unknown; imagePiiDetected: boolean } };
 
         return {
@@ -524,6 +540,29 @@ Base your answer only on the document content provided below.`;
             // claim about image content it was never given.
             imagePiiDetected: (buffers?.length ?? 0) > 0 && object.imagePiiDetected,
         };
+    }
+
+    /**
+     * A validation-failure message alone ("Failed to validate JSON...") doesn't say
+     * what actually went wrong — the useful detail lives in different places
+     * depending on where the failure happened:
+     *  - APICallError.responseBody: the provider rejected the request/response at
+     *    the HTTP level (e.g. Groq's own strict-schema enforcement) — this is the
+     *    provider's raw JSON error body, which usually names the offending field.
+     *  - NoObjectGeneratedError.text: the ai SDK generated a response but it failed
+     *    schema validation client-side — this is the raw text the model produced.
+     * Logged at `warn` since this only ever fires alongside an error/warn already
+     * being logged by the caller — it's supplementary detail, not a new event.
+     */
+    private logGenerationFailureDetail(error: unknown, apiKeyOverride?: string): void {
+        const scrub = (text: string) => (apiKeyOverride ? text.split(apiKeyOverride).join('[REDACTED:API_KEY]') : text);
+
+        if (APICallError.isInstance(error) && error.responseBody) {
+            this.logger.warn(`Provider response body: ${scrub(error.responseBody).slice(0, 2000)}`);
+        }
+        if (NoObjectGeneratedError.isInstance(error) && error.text) {
+            this.logger.warn(`Raw model output: ${scrub(error.text).slice(0, 2000)}`);
+        }
     }
 
     /** Lists the registry so the frontend's model picker has a single source of truth, not a hand-duplicated copy. */

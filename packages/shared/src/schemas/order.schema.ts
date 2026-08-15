@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const LineItemSchema = z.object({
     lineNumber: z.number().describe('Line item number / position in the PO'),
     rawDescription: z.string().describe('Raw item description as written on the purchase order'),
-    customerSku: z.string().optional().describe('Customer SKU or part number, if present'),
+    customerSku: z.string().nullable().describe('Customer SKU or part number, or null if not present'),
     matchedSystemSku: z.string().nullable().describe('System-matched SKU, or null if no match'),
     skuMatchScore: z.number().min(0).max(1).describe('Confidence score 0.0-1.0 for the SKU match'),
     quantity: z.number().describe('Quantity ordered'),
@@ -19,7 +19,7 @@ export const PurchaseOrderSchema = z.object({
     poNumber: z.string().nullable().describe('Purchase order number, or null if not found'),
     orderDate: z.string().nullable().describe('Order date, or null if not found'),
     customerName: z.string().nullable().describe('Customer / buyer name, or null if not found'),
-    customerEmail: z.string().nullable().optional().describe('Customer email, optional / null if not found'),
+    customerEmail: z.string().nullable().describe('Customer email, or null if not found'),
     shippingAddress: z.string().nullable().describe('Shipping address, or null if not found'),
     lineItems: z.array(LineItemSchema).describe('Array of purchase order line items — empty array if none found'),
     currency: z.string().nullable().describe('Currency code (e.g. USD), or null if not found'),

@@ -9,7 +9,11 @@ import { OcrService } from './ocr.service';
 // Mock the SDK boundary so tests never touch the network. The real service
 // calls `generateObject` from `ai`, using a model built by `createGroq` from
 // `@ai-sdk/groq` — mock exactly those, not the earlier Gemini-era imports.
+// APICallError/NoObjectGeneratedError are passed through from the real module
+// (not mocked) — they're plain error classes used for `.isInstance()` checks
+// in extraction.service.ts's failure-diagnostic logging, not network calls.
 jest.mock('ai', () => ({
+    ...jest.requireActual('ai'),
     generateObject: jest.fn().mockResolvedValue({
         object: {
             data: {

@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 export interface ExtractOrderVariables {
     file?: File;
     text?: string;
+    /** Per-request override of the user's saved model preference — omit to use their Settings default. */
+    modelKey?: string;
 }
 
 export interface ExtractOrderResult {
@@ -52,10 +54,11 @@ function resolveUserId(userId: string | null | undefined) {
 }
 
 async function extractOrderRequest(variables: ExtractOrderVariables, userId: string): Promise<ExtractOrderResult> {
-    const { file, text } = variables;
+    const { file, text, modelKey } = variables;
     const formData = new FormData();
     if (file) formData.append('file', file);
     if (text) formData.append('text', text);
+    if (modelKey) formData.append('modelKey', modelKey);
     formData.append('userId', userId);
 
     const response = await fetch('http://localhost:3001/orders/extract', {

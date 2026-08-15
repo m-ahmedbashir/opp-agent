@@ -7,6 +7,7 @@ import { ComplianceService } from '../compliance/compliance.service';
 import { OrdersService } from '../orders/orders.service';
 import { InvoicesService } from '../invoices/invoices.service';
 import { DocumentsService } from '../documents/documents.service';
+import { UsersService } from '../users/users.service';
 import Imap from 'imap';
 import { simpleParser, ParsedMail } from 'mailparser';
 
@@ -21,6 +22,25 @@ import { simpleParser, ParsedMail } from 'mailparser';
 export class EmailIngestionService {
     private readonly logger = new Logger(EmailIngestionService.name);
 
+    /**
+     * Each message that has extractable content triggers a synchronous LLM
+     * call, so an account with a large inbox backlog (first-ever sync, or one
+     * that's been disabled a while) must not be drained in a single run — that
+     * would block for as long as the model takes times the message count.
+     * Capping the batch means a big backlog gets worked off gradually across
+     * successive syncs instead of hanging the caller.
+     */
+    private static readonly MAX_MESSAGES_PER_SYNC = 2;
+
+    /**
+     * TEMPORARY debug switch (added 2026-08-11): when true, syncAccount() only
+     * fetches and logs the latest message(s) — it never calls the extraction
+     * pipeline. Requested to verify IMAP fetching in isolation while the
+     * configured model was unreliable. Flip back to false once fetching is
+     * confirmed solid and you want extraction running again.
+     */
+    private static readonly DEBUG_FETCH_ONLY = true;
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly emailAccountService: EmailAccountService,
@@ -29,6 +49,7 @@ export class EmailIngestionService {
         private readonly ordersService: OrdersService,
         private readonly invoicesService: InvoicesService,
         private readonly documentsService: DocumentsService,
+        private readonly usersService: UsersService,
     ) {}
 
     /**
@@ -59,6 +80,7 @@ export class EmailIngestionService {
     async syncAccount(accountId: string): Promise<{ processed: number; skipped: number }> {
         const account = await this.prisma.emailAccount.findUnique({
             where: { id: accountId },
+            include: { user: { select: { clerkId: true } } },
         });
 
         if (!account) {
@@ -71,6 +93,17 @@ export class EmailIngestionService {
 
         const password = this.emailAccountService.decryptPassword(account.encryptedPassword);
 
+        // Use the account owner's own model/BYOK-key preference from Settings
+        // instead of always falling back to the app default — matches how the
+        // manual upload endpoint (ExtractionController) resolves it.
+        // NOTE: UsersService looks users up by clerkId, not the internal User.id
+        // that account.userId holds — pass account.user.clerkId, not account.userId,
+        // or this silently matches the wrong (or no) user.
+        const [userSettings, apiKeyOverride] = await Promise.all([
+            this.usersService.getSettings(account.user.clerkId),
+            this.usersService.getDecryptedApiKey(account.user.clerkId),
+        ]);
+
         let processed = 0;
         let skipped = 0;
         let highestUid = account.lastProcessedUid;
@@ -79,9 +112,27 @@ export class EmailIngestionService {
         try {
             const messages = await this.fetchMessagesSinceUid(account, password);
 
+            this.logger.log(
+                `IMAP fetch for account ${accountId} returned ${messages.length} message(s) since UID ${account.lastProcessedUid}: [${messages.map((m) => m.uid).join(', ')}]`,
+            );
+
             for (const message of messages) {
                 try {
                     const parsed = await simpleParser(message.body);
+
+                    this.logger.log(
+                        `Email UID ${message.uid}: date="${parsed.date?.toISOString() ?? '(unknown)'}" subject="${parsed.subject ?? '(none)'}" ` +
+                        `from="${parsed.from?.text ?? '(unknown)'}" bodyChars=${(parsed.text ?? '').length} attachments=${parsed.attachments.length}`,
+                    );
+
+                    if (EmailIngestionService.DEBUG_FETCH_ONLY) {
+                        // Fetch-and-log only — no extraction call, and lastProcessedUid
+                        // deliberately does not advance, so every sync (manual or cron)
+                        // keeps showing the true latest message(s) instead of consuming
+                        // the backlog. See DEBUG_FETCH_ONLY's doc comment.
+                        skipped++;
+                        continue;
+                    }
 
                     if (!this.hasExtractableContent(parsed)) {
                         this.logger.debug(`Skipping email UID ${message.uid}: no extractable content.`);
@@ -101,13 +152,13 @@ export class EmailIngestionService {
                     const extractionResult = await this.extractionService.processFile(
                         file,
                         textPayload || undefined,
-                        undefined, // modelKey
-                        undefined, // apiKeyOverride
-                        undefined, // processingMode
+                        userSettings.modelKey,
+                        apiKeyOverride,
+                        userSettings.processingMode,
                         'auto',
                     );
 
-                    await this.routeExtractionResult(extractionResult, account.userId);
+                    await this.routeExtractionResult(extractionResult, account.user.clerkId);
                     processed++;
 
                     if (message.uid > highestUid) {
@@ -158,7 +209,13 @@ export class EmailIngestionService {
         return hasDocumentAttachment || hasBodyText;
     }
 
-    private async routeExtractionResult(result: any, userId: string): Promise<void> {
+    /**
+     * @param clerkId - Orders/Invoices/Documents services all resolve their
+     * owning User via a clerkId connectOrCreate, not the internal User.id —
+     * passing the wrong one silently creates a phantom user row instead of
+     * erroring, so the param is named for what it actually has to be.
+     */
+    private async routeExtractionResult(result: any, clerkId: string): Promise<void> {
         const documentType: string = result.documentType;
         const data = result.extractedData;
         const confidence = result.confidence;
@@ -166,21 +223,21 @@ export class EmailIngestionService {
 
         switch (documentType) {
             case 'invoice':
-                await this.invoicesService.saveInvoice(data, userId, undefined, confidence, avgConfidence);
+                await this.invoicesService.saveInvoice(data, clerkId, undefined, confidence, avgConfidence);
                 this.logger.log(`Routed email extraction to invoice pipeline.`);
                 break;
             case 'purchaseOrder':
-                await this.ordersService.saveOrder(data, userId, confidence, avgConfidence);
+                await this.ordersService.saveOrder(data, clerkId, confidence, avgConfidence);
                 this.logger.log(`Routed email extraction to purchase-order pipeline.`);
                 break;
             case 'receipt':
             case 'resume':
-                await this.documentsService.saveDocument(documentType, data, userId, confidence, avgConfidence);
+                await this.documentsService.saveDocument(documentType, data, clerkId, confidence, avgConfidence);
                 this.logger.log(`Routed email extraction to generic document pipeline (${documentType}).`);
                 break;
             default:
                 this.logger.warn(`Email returned unhandled document type '${documentType}' — flagging for review.`);
-                await this.documentsService.saveDocument(documentType || 'unknown', data, userId, confidence, avgConfidence);
+                await this.documentsService.saveDocument(documentType || 'unknown', data, clerkId, confidence, avgConfidence);
                 break;
         }
     }
@@ -255,13 +312,21 @@ export class EmailIngestionService {
                 password,
                 tlsOptions: { rejectUnauthorized: false },
                 connTimeout: 30000,
+                // node-imap's authTimeout defaults to 5000ms independent of
+                // connTimeout — Gmail's auth handshake routinely takes longer
+                // than that, which is what was actually causing every fetch to
+                // fail with "Timed out while authenticating with server".
+                authTimeout: 30000,
             });
 
             const messages: { uid: number; body: Buffer }[] = [];
 
             client.once('ready', () => {
+                this.logger.log(`IMAP connected to ${account.imapHost}:${account.imapPort} as ${account.username}.`);
+
                 client.openBox('INBOX', true, (err) => {
                     if (err) {
+                        this.logger.error(`IMAP openBox('INBOX') failed: ${err.message}`);
                         client.end();
                         return reject(err);
                     }
@@ -269,16 +334,29 @@ export class EmailIngestionService {
                     // Search for UIDs strictly greater than the last processed one.
                     client.search([['UID', `${account.lastProcessedUid + 1}:*`]], (searchErr, results) => {
                         if (searchErr) {
+                            this.logger.error(`IMAP UID search failed: ${searchErr.message}`);
                             client.end();
                             return reject(searchErr);
                         }
+
+                        this.logger.log(`IMAP search UID ${account.lastProcessedUid + 1}:* matched ${results?.length ?? 0} message(s).`);
 
                         if (!results || results.length === 0) {
                             client.end();
                             return resolve([]);
                         }
 
-                        const fetch = client.fetch(results, { bodies: '', struct: false });
+                        // DEBUG_FETCH_ONLY: newest-first (UID is a reliable proxy for
+                        // recency within one mailbox) so every sync shows the latest
+                        // message(s) instead of the oldest of a large backlog.
+                        // Normal mode: oldest-first, capped — the next sync picks up
+                        // where this one left off since lastProcessedUid only advances
+                        // to what was actually fetched, gradually draining a backlog.
+                        const batch = [...results]
+                            .sort((a, b) => (EmailIngestionService.DEBUG_FETCH_ONLY ? b - a : a - b))
+                            .slice(0, EmailIngestionService.MAX_MESSAGES_PER_SYNC);
+
+                        const fetch = client.fetch(batch, { bodies: '', struct: false });
 
                         fetch.on('message', (msg, seqno) => {
                             let uid = 0;
@@ -315,10 +393,12 @@ export class EmailIngestionService {
             });
 
             client.once('error', (err: Error) => {
+                this.logger.error(`IMAP connection error for ${account.imapHost}:${account.imapPort}: ${err.message}`);
                 client.end();
                 reject(err);
             });
 
+            this.logger.log(`IMAP connecting to ${account.imapHost}:${account.imapPort}...`);
             client.connect();
         });
     }

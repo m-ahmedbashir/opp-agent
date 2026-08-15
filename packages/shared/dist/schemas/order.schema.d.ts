@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare const LineItemSchema: z.ZodObject<{
     lineNumber: z.ZodNumber;
     rawDescription: z.ZodString;
-    customerSku: z.ZodOptional<z.ZodString>;
+    customerSku: z.ZodNullable<z.ZodString>;
     matchedSystemSku: z.ZodNullable<z.ZodString>;
     skuMatchScore: z.ZodNumber;
     quantity: z.ZodNumber;
@@ -17,12 +17,12 @@ export declare const PurchaseOrderSchema: z.ZodObject<{
     poNumber: z.ZodNullable<z.ZodString>;
     orderDate: z.ZodNullable<z.ZodString>;
     customerName: z.ZodNullable<z.ZodString>;
-    customerEmail: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    customerEmail: z.ZodNullable<z.ZodString>;
     shippingAddress: z.ZodNullable<z.ZodString>;
     lineItems: z.ZodArray<z.ZodObject<{
         lineNumber: z.ZodNumber;
         rawDescription: z.ZodString;
-        customerSku: z.ZodOptional<z.ZodString>;
+        customerSku: z.ZodNullable<z.ZodString>;
         matchedSystemSku: z.ZodNullable<z.ZodString>;
         skuMatchScore: z.ZodNumber;
         quantity: z.ZodNumber;

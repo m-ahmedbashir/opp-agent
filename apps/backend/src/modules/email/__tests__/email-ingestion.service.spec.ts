@@ -6,6 +6,7 @@ import { ComplianceService } from '../../compliance/compliance.service';
 import { OrdersService } from '../../orders/orders.service';
 import { InvoicesService } from '../../invoices/invoices.service';
 import { DocumentsService } from '../../documents/documents.service';
+import { UsersService } from '../../users/users.service';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
@@ -36,6 +37,7 @@ function makePrismaMock(accountOverrides?: any) {
         lastSyncAt: new Date(),
         lastSyncStatus: 'PENDING',
         lastSyncError: null,
+        user: { clerkId: 'clerk-user-1' },
         ...accountOverrides,
     };
 
@@ -105,6 +107,13 @@ function makeComplianceServiceMock() {
     return {
         mask: jest.fn().mockImplementation((text: string) => text),
     } as unknown as ComplianceService;
+}
+
+function makeUsersServiceMock() {
+    return {
+        getSettings: jest.fn().mockResolvedValue({ modelKey: 'groq:llama-4-scout', processingMode: 'vision' }),
+        getDecryptedApiKey: jest.fn().mockResolvedValue(undefined),
+    } as unknown as UsersService;
 }
 
 interface MockMessage {
@@ -187,11 +196,18 @@ describe('EmailIngestionService', () => {
     let ordersService: OrdersService;
     let invoicesService: InvoicesService;
     let documentsService: DocumentsService;
+    let usersService: UsersService;
 
     beforeEach(() => {
         jest.clearAllMocks();
         mockedImap.mockClear();
         mockedSimpleParser.mockReset();
+
+        // DEBUG_FETCH_ONLY is a temporary flag (see its doc comment) that makes
+        // the real class skip extraction entirely. Force it off here so this
+        // describe block keeps covering the actual extraction/routing logic;
+        // a dedicated describe block below covers the flag itself.
+        (EmailIngestionService as any).DEBUG_FETCH_ONLY = false;
 
         prisma = makePrismaMock();
         emailAccountService = makeEmailAccountServiceMock();
@@ -200,6 +216,7 @@ describe('EmailIngestionService', () => {
         ordersService = makeOrdersServiceMock();
         invoicesService = makeInvoicesServiceMock();
         documentsService = makeDocumentsServiceMock();
+        usersService = makeUsersServiceMock();
 
         service = new EmailIngestionService(
             prisma,
@@ -209,6 +226,7 @@ describe('EmailIngestionService', () => {
             ordersService,
             invoicesService,
             documentsService,
+            usersService,
         );
     });
 
@@ -235,9 +253,9 @@ describe('EmailIngestionService', () => {
             expect(extractionService.processFile).toHaveBeenCalledWith(
                 expect.objectContaining({ mimetype: 'application/pdf' }),
                 expect.stringContaining('Purchase Order PO-EMAIL-001'),
+                'groq:llama-4-scout',
                 undefined,
-                undefined,
-                undefined,
+                'vision',
                 'auto',
             );
             expect(ordersService.saveOrder).toHaveBeenCalled();
@@ -277,14 +295,14 @@ describe('EmailIngestionService', () => {
             expect(extractionService.processFile).toHaveBeenCalledWith(
                 expect.objectContaining({ mimetype: 'application/pdf' }),
                 expect.stringContaining('Invoice INV-EMAIL-002'),
+                'groq:llama-4-scout',
                 undefined,
-                undefined,
-                undefined,
+                'vision',
                 'auto',
             );
             expect(invoicesService.saveInvoice).toHaveBeenCalledWith(
                 expect.objectContaining({ invoiceNumber: 'INV-EMAIL-002' }),
-                'user-1',
+                'clerk-user-1',
                 undefined,
                 expect.anything(),
                 0.9,
@@ -314,9 +332,9 @@ describe('EmailIngestionService', () => {
             expect(extractionService.processFile).toHaveBeenCalledWith(
                 undefined,
                 expect.stringContaining('Quote for new fittings'),
+                'groq:llama-4-scout',
                 undefined,
-                undefined,
-                undefined,
+                'vision',
                 'auto',
             );
             expect(ordersService.saveOrder).toHaveBeenCalled();
@@ -349,7 +367,7 @@ describe('EmailIngestionService', () => {
             expect(documentsService.saveDocument).toHaveBeenCalledWith(
                 'receipt',
                 expect.objectContaining({ merchantName: 'Acme Co' }),
-                'user-1',
+                'clerk-user-1',
                 expect.anything(),
                 0.8,
             );
@@ -396,6 +414,33 @@ describe('EmailIngestionService', () => {
             expect(prisma.emailAccount.update).toHaveBeenCalledWith(
                 expect.objectContaining({
                     data: expect.objectContaining({ lastProcessedUid: 13, lastSyncStatus: 'ERROR' }),
+                }),
+            );
+        });
+    });
+
+    describe('syncAccount() — DEBUG_FETCH_ONLY mode', () => {
+        it('fetches and logs the latest message(s) without calling extraction, and does not advance lastProcessedUid', async () => {
+            (EmailIngestionService as any).DEBUG_FETCH_ONLY = true;
+
+            makeImapMock([{ uid: 20, body: Buffer.from('email body') }]);
+            mockedSimpleParser.mockResolvedValue({
+                subject: 'Purchase Order PO-EMAIL-999',
+                text: 'Please find the attached purchase order.',
+                from: { text: 'procurement@company.com' },
+                attachments: [],
+            });
+
+            const result = await service.syncAccount('acc-1');
+
+            expect(result.processed).toBe(0);
+            expect(extractionService.processFile).not.toHaveBeenCalled();
+            expect(ordersService.saveOrder).not.toHaveBeenCalled();
+            expect(invoicesService.saveInvoice).not.toHaveBeenCalled();
+            expect(documentsService.saveDocument).not.toHaveBeenCalled();
+            expect(prisma.emailAccount.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ lastProcessedUid: 10 }), // unchanged — see makePrismaMock's default
                 }),
             );
         });

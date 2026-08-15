@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { IconUpload, IconX, IconTextCaption, IconCheck, IconBuildingFactory } from '@tabler/icons-react';
+import { IconUpload, IconX, IconTextCaption, IconCheck, IconBuildingFactory, IconInbox, IconHistory, IconSettings } from '@tabler/icons-react';
 import {
     useExtractOrder,
     useOrders,
@@ -19,6 +19,8 @@ import {
     type SavedLineItem,
 } from '@/features/orders/use-orders';
 import { EmailAccountsForm } from '@/features/orders/email-accounts-form';
+import { useModelOptions } from '@/features/extraction-settings/hooks/useModelOptions';
+import { Label } from '@/components/ui/label';
 
 function ConfidenceBadge({ score }: { score: number | null | undefined }) {
     if (score === null || score === undefined) return null;
@@ -136,17 +138,48 @@ function OrderCard({ order, catalog }: { order: SavedPurchaseOrder; catalog: { s
     );
 }
 
+function OrderList({
+    orders,
+    catalog,
+    loading,
+    emptyMessage,
+}: {
+    orders: SavedPurchaseOrder[] | undefined;
+    catalog: { sku: string; name: string }[] | undefined;
+    loading: boolean;
+    emptyMessage: string;
+}) {
+    if (loading) {
+        return <p className="text-sm text-muted-foreground">Loading orders...</p>;
+    }
+    if (!orders || orders.length === 0) {
+        return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
+    }
+    return (
+        <div className="space-y-4">
+            {orders.map((order) => (
+                <OrderCard key={order.id} order={order} catalog={catalog} />
+            ))}
+        </div>
+    );
+}
+
 export function OrdersView() {
     const [files, setFiles] = useState<File[]>([]);
     const [pastedText, setPastedText] = useState('');
+    const [modelKey, setModelKey] = useState<string>('');
     const { mutateAsync: extractOrder, isPending: extracting } = useExtractOrder();
     const { data: orders, isLoading: ordersLoading } = useOrders();
     const { data: catalog, isLoading: catalogLoading } = useCatalog();
+    const { models, loading: modelsLoading } = useModelOptions();
+
+    const reviewOrders = orders?.filter((order) => order.status !== 'APPROVED');
+    const historyOrders = orders?.filter((order) => order.status === 'APPROVED');
 
     const handleUploadFiles = async (filesToUpload: File[]) => {
         try {
             for (const file of filesToUpload) {
-                await extractOrder({ file });
+                await extractOrder({ file, modelKey: modelKey || undefined });
             }
             setFiles([]);
         } catch (error) {
@@ -157,7 +190,7 @@ export function OrdersView() {
     const handleTextExtract = async () => {
         if (!pastedText.trim()) return;
         try {
-            await extractOrder({ text: pastedText });
+            await extractOrder({ text: pastedText, modelKey: modelKey || undefined });
             setPastedText('');
         } catch (error) {
             console.error(error);
@@ -165,106 +198,160 @@ export function OrdersView() {
     };
 
     return (
-        <div className="space-y-6 pb-10">
-            <Tabs defaultValue="file" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="file">File Upload</TabsTrigger>
-                    <TabsTrigger value="text">Paste Text</TabsTrigger>
+        <div className="pb-10">
+            <Tabs defaultValue="intake" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="intake">
+                        <IconUpload className="mr-1.5 h-4 w-4" />
+                        Intake
+                    </TabsTrigger>
+                    <TabsTrigger value="review">
+                        <IconInbox className="mr-1.5 h-4 w-4" />
+                        Review Queue
+                        {reviewOrders && reviewOrders.length > 0 && (
+                            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5">{reviewOrders.length}</Badge>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger value="history">
+                        <IconHistory className="mr-1.5 h-4 w-4" />
+                        History
+                    </TabsTrigger>
+                    <TabsTrigger value="settings">
+                        <IconSettings className="mr-1.5 h-4 w-4" />
+                        Settings
+                    </TabsTrigger>
                 </TabsList>
-                <TabsContent value="file" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Upload Purchase Order</CardTitle>
-                            <CardDescription>Drag and drop or select a PO file (PDF, image, CSV, text, JSON).</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <FileUploader
-                                value={files}
-                                onValueChange={setFiles}
-                                accept={{
-                                    'application/pdf': ['.pdf'],
-                                    'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-                                    'text/plain': ['.txt'],
-                                    'text/csv': ['.csv'],
-                                    'application/json': ['.json'],
-                                }}
-                                maxFiles={5}
-                                maxSize={10 * 1024 * 1024}
-                                disabled={extracting}
-                            />
-                            {files.length > 0 && (
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setFiles([])} disabled={extracting} className="h-8 gap-1 px-3 text-xs">
-                                        <IconX className="h-3.5 w-3.5" />
-                                        Clear files
-                                    </Button>
-                                    <Button size="sm" onClick={() => handleUploadFiles(files)} disabled={extracting} className="h-8 px-4 text-xs">
-                                        {extracting ? 'Processing...' : (
-                                            <>
-                                                <IconUpload className="mr-1.5 h-3.5 w-3.5" />
-                                                Extract PO Data
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+
+                <TabsContent value="intake" className="mt-6 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <Label htmlFor="model-select" className="text-sm text-muted-foreground shrink-0">
+                            Extraction model
+                        </Label>
+                        <Select value={modelKey || '__default__'} onValueChange={(value) => setModelKey(value === '__default__' ? '' : value)}>
+                            <SelectTrigger id="model-select" className="h-8 w-auto min-w-[220px] text-xs" disabled={modelsLoading}>
+                                <SelectValue placeholder="Use my default (Settings)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__default__" className="text-xs">Use my default (Settings)</SelectItem>
+                                {models.map((model) => (
+                                    <SelectItem key={model.key} value={model.key} className="text-xs">
+                                        {model.key} {model.supportsVision ? '' : '(text only)'}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Tabs defaultValue="file" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="file">File Upload</TabsTrigger>
+                            <TabsTrigger value="text">Paste Text</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="file" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Upload Purchase Order</CardTitle>
+                                    <CardDescription>Drag and drop or select a PO file (PDF, image, CSV, text, JSON).</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FileUploader
+                                        value={files}
+                                        onValueChange={setFiles}
+                                        accept={{
+                                            'application/pdf': ['.pdf'],
+                                            'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
+                                            'text/plain': ['.txt'],
+                                            'text/csv': ['.csv'],
+                                            'application/json': ['.json'],
+                                        }}
+                                        maxFiles={5}
+                                        maxSize={10 * 1024 * 1024}
+                                        disabled={extracting}
+                                    />
+                                    {files.length > 0 && (
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button variant="ghost" size="sm" onClick={() => setFiles([])} disabled={extracting} className="h-8 gap-1 px-3 text-xs">
+                                                <IconX className="h-3.5 w-3.5" />
+                                                Clear files
+                                            </Button>
+                                            <Button size="sm" onClick={() => handleUploadFiles(files)} disabled={extracting} className="h-8 px-4 text-xs">
+                                                {extracting ? 'Processing...' : (
+                                                    <>
+                                                        <IconUpload className="mr-1.5 h-3.5 w-3.5" />
+                                                        Extract PO Data
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="text" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Paste Purchase Order Content</CardTitle>
+                                    <CardDescription>Copy and paste raw PO text, JSON, or CSV blocks here.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <Textarea
+                                        placeholder="Paste your purchase order text here..."
+                                        className="min-h-[250px] resize-none font-mono text-sm shadow-sm"
+                                        value={pastedText}
+                                        onChange={(e) => setPastedText(e.target.value)}
+                                        disabled={extracting}
+                                    />
+                                    {pastedText.trim().length > 0 && (
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button variant="ghost" size="sm" onClick={() => setPastedText('')} disabled={extracting} className="h-8 gap-1 px-3 text-xs">
+                                                <IconX className="h-3.5 w-3.5" />
+                                                Clear text
+                                            </Button>
+                                            <Button size="sm" onClick={handleTextExtract} disabled={extracting} className="h-8 px-4 text-xs">
+                                                {extracting ? 'Processing...' : (
+                                                    <>
+                                                        <IconTextCaption className="mr-1.5 h-3.5 w-3.5" />
+                                                        Extract PO Data
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </TabsContent>
-                <TabsContent value="text" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Paste Purchase Order Content</CardTitle>
-                            <CardDescription>Copy and paste raw PO text, JSON, or CSV blocks here.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Textarea
-                                placeholder="Paste your purchase order text here..."
-                                className="min-h-[250px] resize-none font-mono text-sm shadow-sm"
-                                value={pastedText}
-                                onChange={(e) => setPastedText(e.target.value)}
-                                disabled={extracting}
-                            />
-                            {pastedText.trim().length > 0 && (
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setPastedText('')} disabled={extracting} className="h-8 gap-1 px-3 text-xs">
-                                        <IconX className="h-3.5 w-3.5" />
-                                        Clear text
-                                    </Button>
-                                    <Button size="sm" onClick={handleTextExtract} disabled={extracting} className="h-8 px-4 text-xs">
-                                        {extracting ? 'Processing...' : (
-                                            <>
-                                                <IconTextCaption className="mr-1.5 h-3.5 w-3.5" />
-                                                Extract PO Data
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+
+                <TabsContent value="review" className="mt-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                        <IconBuildingFactory className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-xl font-semibold tracking-tight">Purchase Orders for Review</h3>
+                    </div>
+                    <OrderList
+                        orders={reviewOrders}
+                        catalog={catalog}
+                        loading={ordersLoading || catalogLoading}
+                        emptyMessage="No purchase orders awaiting review. Upload or paste one to get started."
+                    />
+                </TabsContent>
+
+                <TabsContent value="history" className="mt-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                        <IconHistory className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-xl font-semibold tracking-tight">Approved Orders</h3>
+                    </div>
+                    <OrderList
+                        orders={historyOrders}
+                        catalog={catalog}
+                        loading={ordersLoading || catalogLoading}
+                        emptyMessage="No approved orders yet."
+                    />
+                </TabsContent>
+
+                <TabsContent value="settings" className="mt-6">
+                    <EmailAccountsForm />
                 </TabsContent>
             </Tabs>
-
-            <EmailAccountsForm />
-
-            <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <IconBuildingFactory className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold tracking-tight">Purchase Orders for Review</h3>
-                </div>
-                {ordersLoading || catalogLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading orders...</p>
-                ) : !orders || orders.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No purchase orders yet. Upload or paste one to get started.</p>
-                ) : (
-                    <div className="space-y-4">
-                        {orders.map((order) => (
-                            <OrderCard key={order.id} order={order} catalog={catalog} />
-                        ))}
-                    </div>
-                )}
-            </div>
         </div>
     );
 }

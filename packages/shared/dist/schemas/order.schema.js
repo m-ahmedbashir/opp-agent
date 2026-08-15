@@ -5,7 +5,7 @@ const zod_1 = require("zod");
 exports.LineItemSchema = zod_1.z.object({
     lineNumber: zod_1.z.number().describe('Line item number / position in the PO'),
     rawDescription: zod_1.z.string().describe('Raw item description as written on the purchase order'),
-    customerSku: zod_1.z.string().optional().describe('Customer SKU or part number, if present'),
+    customerSku: zod_1.z.string().nullable().describe('Customer SKU or part number, or null if not present'),
     matchedSystemSku: zod_1.z.string().nullable().describe('System-matched SKU, or null if no match'),
     skuMatchScore: zod_1.z.number().min(0).max(1).describe('Confidence score 0.0-1.0 for the SKU match'),
     quantity: zod_1.z.number().describe('Quantity ordered'),
@@ -20,7 +20,7 @@ exports.PurchaseOrderSchema = zod_1.z.object({
     poNumber: zod_1.z.string().nullable().describe('Purchase order number, or null if not found'),
     orderDate: zod_1.z.string().nullable().describe('Order date, or null if not found'),
     customerName: zod_1.z.string().nullable().describe('Customer / buyer name, or null if not found'),
-    customerEmail: zod_1.z.string().nullable().optional().describe('Customer email, optional / null if not found'),
+    customerEmail: zod_1.z.string().nullable().describe('Customer email, or null if not found'),
     shippingAddress: zod_1.z.string().nullable().describe('Shipping address, or null if not found'),
     lineItems: zod_1.z.array(exports.LineItemSchema).describe('Array of purchase order line items — empty array if none found'),
     currency: zod_1.z.string().nullable().describe('Currency code (e.g. USD), or null if not found'),

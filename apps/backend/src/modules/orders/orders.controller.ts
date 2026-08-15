@@ -24,6 +24,8 @@ export const ExtractOrderSchema = z.object({
     text: z.string().optional(),
     userId: z.string().optional(),
     processingMode: z.enum(['vision', 'local-ocr']).optional(),
+    /** Per-request override of the user's saved model preference — see model-registry.ts. Unknown keys fall back to the user's default. */
+    modelKey: z.string().optional(),
 });
 
 export class ExtractOrderDto extends createZodDto(ExtractOrderSchema) {}
@@ -82,7 +84,7 @@ export class OrdersController {
             file,
             dto.text,
             dto.userId ?? 'default-user',
-            modelKey,
+            dto.modelKey || modelKey,
             apiKeyOverride,
             dto.processingMode || userProcessingMode,
         );

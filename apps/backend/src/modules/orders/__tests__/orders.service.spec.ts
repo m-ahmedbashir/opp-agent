@@ -114,7 +114,7 @@ describe('OrdersService', () => {
             {
                 lineNumber: 2,
                 rawDescription: 'Carbon steel pipe 4 inch schedule 40',
-                customerSku: undefined,
+                customerSku: null,
                 matchedSystemSku: null,
                 skuMatchScore: 0,
                 quantity: 10,
