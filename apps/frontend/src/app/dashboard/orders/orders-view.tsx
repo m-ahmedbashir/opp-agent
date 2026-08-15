@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { IconUpload, IconX, IconTextCaption, IconCheck, IconBuildingFactory, IconInbox, IconHistory, IconSettings } from '@tabler/icons-react';
 import {
@@ -95,50 +97,61 @@ function LineItemRow({
     );
 }
 
-function OrderCard({ order, catalog }: { order: SavedPurchaseOrder; catalog: { sku: string; name: string }[] | undefined }) {
+/** Detail view for a single order — opened in a Sheet when its table row is clicked. */
+function OrderDetailSheet({
+    order,
+    catalog,
+    onOpenChange,
+}: {
+    order: SavedPurchaseOrder | null;
+    catalog: { sku: string; name: string }[] | undefined;
+    onOpenChange: (open: boolean) => void;
+}) {
     const { mutate: approve, isPending: approving } = useApproveOrder();
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle className="text-base">PO {order.poNumber ?? '—'}</CardTitle>
-                        <CardDescription className="text-xs">
-                            {order.customerName ?? 'Unknown customer'} • {order.orderDate ?? 'No date'} • {order.currency} {order.totalAmount ?? '—'}
-                        </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <ConfidenceBadge score={order.avgConfidence} />
-                        <Badge
-                            variant={order.status === 'APPROVED' ? 'default' : 'outline'}
-                            className={order.status === 'APPROVED' ? 'bg-green-600' : ''}
-                        >
-                            {order.status}
-                        </Badge>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-3">
-                    {order.lineItems.map((item) => (
-                        <LineItemRow key={item.id} order={order} item={item} catalog={catalog} />
-                    ))}
-                </div>
-                {order.status !== 'APPROVED' && (
-                    <div className="flex justify-end pt-2">
-                        <Button size="sm" onClick={() => approve(order.id)} disabled={approving}>
-                            <IconCheck className="mr-1.5 h-4 w-4" />
-                            {approving ? 'Pushing...' : 'Approve & Push to ERP'}
-                        </Button>
-                    </div>
+        <Sheet open={order !== null} onOpenChange={onOpenChange}>
+            <SheetContent className="w-full gap-0 sm:max-w-xl">
+                {order && (
+                    <>
+                        <SheetHeader>
+                            <div className="flex items-center justify-between pr-8">
+                                <SheetTitle>PO {order.poNumber ?? '—'}</SheetTitle>
+                                <div className="flex items-center gap-2">
+                                    <ConfidenceBadge score={order.avgConfidence} />
+                                    <Badge
+                                        variant={order.status === 'APPROVED' ? 'default' : 'outline'}
+                                        className={order.status === 'APPROVED' ? 'bg-green-600' : ''}
+                                    >
+                                        {order.status}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <SheetDescription>
+                                {order.customerName ?? 'Unknown customer'} • {order.orderDate ?? 'No date'} • {order.currency} {order.totalAmount ?? '—'}
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="flex-1 space-y-3 overflow-y-auto px-4">
+                            {order.lineItems.map((item) => (
+                                <LineItemRow key={item.id} order={order} item={item} catalog={catalog} />
+                            ))}
+                        </div>
+                        {order.status !== 'APPROVED' && (
+                            <SheetFooter>
+                                <Button onClick={() => approve(order.id)} disabled={approving}>
+                                    <IconCheck className="mr-1.5 h-4 w-4" />
+                                    {approving ? 'Pushing...' : 'Approve & Push to ERP'}
+                                </Button>
+                            </SheetFooter>
+                        )}
+                    </>
                 )}
-            </CardContent>
-        </Card>
+            </SheetContent>
+        </Sheet>
     );
 }
 
-function OrderList({
+function OrdersTable({
     orders,
     catalog,
     loading,
@@ -149,18 +162,59 @@ function OrderList({
     loading: boolean;
     emptyMessage: string;
 }) {
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    // Look up by ID (not a stored object reference) so the sheet reflects
+    // fresh data after a mutation (approve, SKU update) invalidates `orders`.
+    const selectedOrder = orders?.find((order) => order.id === selectedOrderId) ?? null;
+
     if (loading) {
         return <p className="text-sm text-muted-foreground">Loading orders...</p>;
     }
     if (!orders || orders.length === 0) {
         return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
     }
+
     return (
-        <div className="space-y-4">
-            {orders.map((order) => (
-                <OrderCard key={order.id} order={order} catalog={catalog} />
-            ))}
-        </div>
+        <>
+            <div className="rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>PO Number</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead>Confidence</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {orders.map((order) => (
+                            <TableRow key={order.id} className="cursor-pointer" onClick={() => setSelectedOrderId(order.id)}>
+                                <TableCell className="font-medium">{order.poNumber ?? '—'}</TableCell>
+                                <TableCell>{order.customerName ?? 'Unknown customer'}</TableCell>
+                                <TableCell>{order.orderDate ?? '—'}</TableCell>
+                                <TableCell>{order.currency} {order.totalAmount ?? '—'}</TableCell>
+                                <TableCell><ConfidenceBadge score={order.avgConfidence} /></TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={order.status === 'APPROVED' ? 'default' : 'outline'}
+                                        className={order.status === 'APPROVED' ? 'bg-green-600' : ''}
+                                    >
+                                        {order.status}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+            <OrderDetailSheet
+                order={selectedOrder}
+                catalog={catalog}
+                onOpenChange={(open) => { if (!open) setSelectedOrderId(null); }}
+            />
+        </>
     );
 }
 
@@ -327,7 +381,7 @@ export function OrdersView() {
                         <IconBuildingFactory className="h-5 w-5 text-muted-foreground" />
                         <h3 className="text-xl font-semibold tracking-tight">Purchase Orders for Review</h3>
                     </div>
-                    <OrderList
+                    <OrdersTable
                         orders={reviewOrders}
                         catalog={catalog}
                         loading={ordersLoading || catalogLoading}
@@ -340,7 +394,7 @@ export function OrdersView() {
                         <IconHistory className="h-5 w-5 text-muted-foreground" />
                         <h3 className="text-xl font-semibold tracking-tight">Approved Orders</h3>
                     </div>
-                    <OrderList
+                    <OrdersTable
                         orders={historyOrders}
                         catalog={catalog}
                         loading={ordersLoading || catalogLoading}
