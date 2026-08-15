@@ -63,6 +63,10 @@ jest.mock('@ai-sdk/openai', () => ({
     createOpenAI: jest.fn().mockReturnValue(jest.fn((modelId: string) => `openai-model:${modelId}`)),
 }));
 
+jest.mock('@ai-sdk/google', () => ({
+    createGoogleGenerativeAI: jest.fn().mockReturnValue(jest.fn((modelId: string) => `google-model:${modelId}`)),
+}));
+
 jest.mock('@ai-sdk/anthropic', () => ({
     createAnthropic: jest.fn().mockReturnValue(jest.fn((modelId: string) => `anthropic-model:${modelId}`)),
 }));

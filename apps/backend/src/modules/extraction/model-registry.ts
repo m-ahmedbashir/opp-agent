@@ -1,12 +1,13 @@
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel } from 'ai';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ModelProviderName = 'openrouter' | 'groq' | 'openai' | 'anthropic';
+export type ModelProviderName = 'openrouter' | 'groq' | 'openai' | 'anthropic' | 'google';
 
 export interface ModelDescriptor {
     provider: ModelProviderName;
@@ -72,6 +73,14 @@ export const MODEL_REGISTRY = {
         modelId: 'claude-3-5-sonnet-20241022',
         supportsVision: true,
     },
+    // Cheapest current Gemini tier ($0.10/$0.40 per M input/output tokens) —
+    // multimodal, explicitly positioned by Google for high-volume/low-cost
+    // structured extraction. Verified against ai.google.dev, not guessed.
+    'google:gemini-3.1-flash-lite': {
+        provider: 'google',
+        modelId: 'gemini-3.1-flash-lite',
+        supportsVision: true,
+    },
 } as const satisfies Record<string, ModelDescriptor>;
 
 export type ModelKey = keyof typeof MODEL_REGISTRY;
@@ -104,6 +113,8 @@ export function resolveModel(key: ModelKey, apiKeyOverride?: string): LanguageMo
             return createOpenAI({ apiKey: apiKeyOverride ?? process.env.OPENAI_API_KEY })(descriptor.modelId);
         case 'anthropic':
             return createAnthropic({ apiKey: apiKeyOverride ?? process.env.ANTHROPIC_API_KEY })(descriptor.modelId);
+        case 'google':
+            return createGoogleGenerativeAI({ apiKey: apiKeyOverride ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY })(descriptor.modelId);
     }
 }
 
