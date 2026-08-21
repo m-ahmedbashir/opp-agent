@@ -99,7 +99,7 @@ export class EmailIngestionService implements OnModuleInit {
     /**
      * Sync a single account by ID. Public so it can be triggered manually.
      */
-    async syncAccount(accountId: string): Promise<{ processed: number; skipped: number }> {
+    async syncAccount(accountId: string): Promise<{ processed: number; skipped: number; failed: number }> {
         const account = await this.prisma.emailAccount.findUnique({
             where: { id: accountId },
             include: { user: { select: { clerkId: true } } },
@@ -110,7 +110,7 @@ export class EmailIngestionService implements OnModuleInit {
         }
 
         if (!account.enabled) {
-            return { processed: 0, skipped: 0 };
+            return { processed: 0, skipped: 0, failed: 0 };
         }
 
         const password = this.emailAccountService.decryptPassword(account.encryptedPassword);
@@ -128,8 +128,15 @@ export class EmailIngestionService implements OnModuleInit {
 
         let processed = 0;
         let skipped = 0;
+        let failed = 0;
         let highestUid = account.lastProcessedUid;
-        let lastError: string | null = null;
+        // Per-message extraction failure (rate limit, bad model output, etc.) —
+        // informational only. It must NOT flip lastSyncStatus to ERROR: the sync
+        // itself (IMAP connect + fetch, the outer try/catch below) succeeded, so
+        // the account is not broken — some message's AI processing just failed.
+        // Conflating the two made a single rate-limited email look like the
+        // whole mailbox connection was down.
+        let lastExtractionError: string | null = null;
 
         try {
             const messages = await this.fetchMessagesSinceUid(account, password);
@@ -189,7 +196,8 @@ export class EmailIngestionService implements OnModuleInit {
                 } catch (innerError) {
                     const messageText = innerError instanceof Error ? innerError.message : 'Unknown error';
                     this.logger.error(`Failed to process email UID ${message.uid} for account ${accountId}: ${messageText}`);
-                    lastError = messageText;
+                    failed++;
+                    lastExtractionError = messageText;
                     if (message.uid > highestUid) {
                         highestUid = message.uid;
                     }
@@ -201,8 +209,13 @@ export class EmailIngestionService implements OnModuleInit {
                 data: {
                     lastProcessedUid: highestUid,
                     lastSyncAt: new Date(),
-                    lastSyncStatus: lastError ? 'ERROR' : 'OK',
-                    lastSyncError: lastError,
+                    // Reaching here means the IMAP connection + fetch succeeded —
+                    // that's what "sync" means. A message failing AI extraction is
+                    // a separate, per-message concern (see lastExtractionError
+                    // above), surfaced via lastSyncError for visibility without
+                    // marking the whole account as broken.
+                    lastSyncStatus: 'OK',
+                    lastSyncError: lastExtractionError,
                 },
             });
         } catch (error) {
@@ -221,8 +234,8 @@ export class EmailIngestionService implements OnModuleInit {
             throw error;
         }
 
-        this.logger.log(`Email sync complete for account ${accountId}: ${processed} processed, ${skipped} skipped, highest UID ${highestUid}.`);
-        return { processed, skipped };
+        this.logger.log(`Email sync complete for account ${accountId}: ${processed} processed, ${skipped} skipped, ${failed} failed, highest UID ${highestUid}.`);
+        return { processed, skipped, failed };
     }
 
     private hasExtractableContent(parsed: ParsedMail): boolean {

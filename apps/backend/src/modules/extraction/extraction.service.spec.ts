@@ -94,7 +94,6 @@ jest.mock('tesseract.js', () => ({
 
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { PDFParse } from 'pdf-parse';
 import * as fs from 'fs';
@@ -537,16 +536,16 @@ describe('ExtractionService', () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file);
 
-            const createOpenRouterArgs = (createOpenRouter as jest.Mock).mock.calls.at(-1)![0];
-            expect(createOpenRouterArgs.apiKey).toBe(process.env.OPENROUTER_API_KEY);
+            const createGoogleArgs = (createGoogleGenerativeAI as jest.Mock).mock.calls.at(-1)![0];
+            expect(createGoogleArgs.apiKey).toBe(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
         });
 
         it("passes the caller's decrypted key straight to the provider SDK instead of the app's shared key", async () => {
             const file = makeFile('Total: 500 USD', 'text/plain');
             await service.processFile(file, undefined, undefined, 'sk-users-own-decrypted-key');
 
-            const createOpenRouterArgs = (createOpenRouter as jest.Mock).mock.calls.at(-1)![0];
-            expect(createOpenRouterArgs.apiKey).toBe('sk-users-own-decrypted-key');
+            const createGoogleArgs = (createGoogleGenerativeAI as jest.Mock).mock.calls.at(-1)![0];
+            expect(createGoogleArgs.apiKey).toBe('sk-users-own-decrypted-key');
         });
 
         it('never includes the apiKeyOverride in the thrown error message if the model call fails', async () => {

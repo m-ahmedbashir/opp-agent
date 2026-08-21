@@ -401,7 +401,7 @@ describe('EmailIngestionService', () => {
             expect(extractionService.processFile).not.toHaveBeenCalled();
         });
 
-        it('updates the last processed UID even when extraction fails', async () => {
+        it('updates the last processed UID even when extraction fails, but keeps lastSyncStatus OK — the IMAP sync itself succeeded, only the AI step failed', async () => {
             makeImapMock([{ uid: 13, body: Buffer.from('bad email') }]);
             mockedSimpleParser.mockResolvedValue({
                 subject: 'Purchase Order PO-BAD',
@@ -421,9 +421,14 @@ describe('EmailIngestionService', () => {
 
             expect(result.processed).toBe(0);
             expect(result.skipped).toBe(0);
+            expect(result.failed).toBe(1);
             expect(prisma.emailAccount.update).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ lastProcessedUid: 13, lastSyncStatus: 'ERROR' }),
+                    data: expect.objectContaining({
+                        lastProcessedUid: 13,
+                        lastSyncStatus: 'OK',
+                        lastSyncError: 'Extraction failed',
+                    }),
                 }),
             );
         });
