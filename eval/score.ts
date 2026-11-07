@@ -244,6 +244,8 @@ export interface ScoreSummary {
     schemaValidRate: number;
     /** All scalar fields over all documents, pooled: correct answers / questions asked. */
     fieldAccuracy: number;
+    /** The same, leaving out failed calls: how well the model reads when it answers at all. */
+    completedFieldAccuracy: number;
     perField: Record<ScalarField, FieldScore>;
     lineCounts: LineCounts;
     lineItems: PrfScores;
@@ -317,10 +319,14 @@ export function scoreRecords(records: RunRecord[], truth: TruthEntry[]): ScoreSu
         total += score.total;
     }
 
+    const completedTotal = records.filter((r) => r.extractedData !== null).length * SCALAR_FIELDS.length;
+
     return {
         documents: records.length,
         schemaValidRate: records.length ? records.filter((r) => r.schemaValid).length / records.length : 0,
         fieldAccuracy: total ? correct / total : 0,
+        // Failed calls score 0 correct, so `correct` already only comes from completed ones.
+        completedFieldAccuracy: completedTotal ? correct / completedTotal : 0,
         perField,
         lineCounts,
         lineItems: precisionRecallF1(lineCounts),

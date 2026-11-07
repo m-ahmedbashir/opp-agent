@@ -40,6 +40,7 @@ function summaryRow(label: string, summary: ScoreSummary): string[] {
         String(summary.documents),
         pct(summary.schemaValidRate),
         pct(summary.fieldAccuracy),
+        pct(summary.completedFieldAccuracy),
         pct(summary.lineItems.precision),
         pct(summary.lineItems.recall),
         pct(summary.lineItems.f1),
@@ -47,7 +48,7 @@ function summaryRow(label: string, summary: ScoreSummary): string[] {
         seconds(summary.latency.p95Ms),
     ];
 }
-const SUMMARY_HEADER = ['Group', 'Docs', 'Schema valid', 'Field accuracy', 'Line precision', 'Line recall', 'Line F1', 'Mean latency', 'p95 latency'];
+const SUMMARY_HEADER = ['Group', 'Docs', 'Schema valid', 'Field accuracy', 'Accuracy when completed', 'Line precision', 'Line recall', 'Line F1', 'Mean latency', 'p95 latency'];
 
 /** Every scored field with a single comparable value: accuracy, or F1 for line items. */
 function fieldValues(summary: ScoreSummary): Array<{ field: string; value: number }> {
@@ -122,6 +123,7 @@ function writeCompareReport(before: LoadedRun, after: LoadedRun): string {
         table(['Metric', before.name, after.name, 'Change'], [
             row('Schema valid', before.scores.overall.schemaValidRate, after.scores.overall.schemaValidRate),
             row('Field accuracy', before.scores.overall.fieldAccuracy, after.scores.overall.fieldAccuracy),
+            row('Accuracy when completed', before.scores.overall.completedFieldAccuracy, after.scores.overall.completedFieldAccuracy),
             row('Line precision', before.scores.overall.lineItems.precision, after.scores.overall.lineItems.precision),
             row('Line recall', before.scores.overall.lineItems.recall, after.scores.overall.lineItems.recall),
             row('Line F1', before.scores.overall.lineItems.f1, after.scores.overall.lineItems.f1),

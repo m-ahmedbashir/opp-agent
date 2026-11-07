@@ -192,6 +192,12 @@ describe('scoreRecords', () => {
         expect(summary.schemaValidRate).toBe(0);
     });
 
+    it('leaves failed calls out of completed accuracy only', () => {
+        const summary = scoreRecords([record('a'), record('b', { extractedData: null, schemaValid: false })], truth);
+        expect(summary.fieldAccuracy).toBe(0.5);
+        expect(summary.completedFieldAccuracy).toBe(1);
+    });
+
     it('records expected and got for a wrong field', () => {
         const summary = scoreRecords([record('a', { extractedData: { ...invoice, totalAmount: 1 } })], truth);
         expect(summary.perField.totalAmount.accuracy).toBe(0);
