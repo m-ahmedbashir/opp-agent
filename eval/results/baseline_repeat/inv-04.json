@@ -1,0 +1,73 @@
+{
+  "id": "inv-04",
+  "language": "english",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": "INV-10482",
+    "issueDate": "2026-09-25",
+    "dueDate": "2026-10-09",
+    "vendorName": "Bluefern Supplies Ltd",
+    "vendorAddress": "Harbour Road 45, Exampleville EX4 5MP",
+    "customerName": "Greyfriars Consulting Ltd",
+    "customerAddress": "Elm Close 11, Exampleville EX4 5MP",
+    "lineItems": [
+      {
+        "description": "On-site installation",
+        "quantity": 9,
+        "unitPrice": 1274.86,
+        "totalPrice": 11473.74
+      },
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 2,
+        "unitPrice": 680.23,
+        "totalPrice": 1360.46
+      },
+      {
+        "description": "Data protection training",
+        "quantity": 9,
+        "unitPrice": 631.72,
+        "totalPrice": 5685.48
+      },
+      {
+        "description": "Cross-cut paper shredder",
+        "quantity": 8,
+        "unitPrice": 1294.84,
+        "totalPrice": 10358.72
+      },
+      {
+        "description": "Black toner cartridge",
+        "quantity": 12,
+        "unitPrice": 617.94,
+        "totalPrice": 7415.28
+      }
+    ],
+    "subtotal": 36293.68,
+    "taxAmount": 6895.8,
+    "totalAmount": 43189.48,
+    "currency": "USD"
+  },
+  "schemaValid": true,
+  "latencyMs": 2262,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "Bluefern Supplies Ltd\nHarbour Road 45, Exampleville EX4 5MP\nInvoice Invoice number: INV-10482\nInvoice date: 25 Sep 2026\nDue date: 9 Oct 2026\nAll amounts in USD\nBill to\nGreyfriars Consulting Ltd\nElm Close 11, Exampleville EX4 5MP\nDescription Qty Unit price Total\nOn-site installation 9 1,274.86 11,473.74\nErgonomic office chair 2 680.23 1,360.46\nData protection training 9 631.72 5,685.48\nCross-cut paper shredder 8 1,294.84 10,358.72\nBlack toner cartridge 12 617.94 7,415.28\nSubtotal 36,293.68\nVAT 19 % 6,895.80\nAmount due 43,189.48\nIBAN DE07 [REDACTED:CARD] | VAT ID [REDACTED:VAT] | [REDACTED:EMAIL] | Phone +49 [REDACTED:PHONE]41\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

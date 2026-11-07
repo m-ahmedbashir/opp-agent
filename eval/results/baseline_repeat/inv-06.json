@@ -1,0 +1,67 @@
+{
+  "id": "inv-06",
+  "language": "english",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": "CN-3307",
+    "issueDate": "10.10.2026",
+    "dueDate": "09.11.2026",
+    "vendorName": "Greyfriars Consulting Ltd",
+    "vendorAddress": "Elm Close 28, Sampleton AB1 2CD",
+    "customerName": "Oakmere Print Works LLC",
+    "customerAddress": "Elm Close 55, Fakeham FK9 1ZZ",
+    "lineItems": [
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 8,
+        "unitPrice": 1023.19,
+        "totalPrice": 8185.52
+      },
+      {
+        "description": "Copy paper A4 (500 sheets)",
+        "quantity": 10,
+        "unitPrice": 527.8,
+        "totalPrice": 5278
+      },
+      {
+        "description": "Adjustable monitor arm",
+        "quantity": 3,
+        "unitPrice": 622.09,
+        "totalPrice": 1866.27
+      },
+      {
+        "description": "Returned goods credit",
+        "quantity": 1,
+        "unitPrice": -1023.19,
+        "totalPrice": -1023.19
+      }
+    ],
+    "subtotal": 14306.6,
+    "taxAmount": 2718.25,
+    "totalAmount": 17024.85,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 1700,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "Greyfriars Consulting Ltd\nElm Close 28, Sampleton AB1 2CD\nInvoice Invoice number: CN-3307\nInvoice date: 10.10.2026\nDue date: 09.11.2026\nAll amounts in EUR\nBill to\nOakmere Print Works LLC\nElm Close 55, Fakeham FK9 1ZZ\nDescription Qty Unit price Total\nErgonomic office chair 8 1.023,19 8.185,52\nCopy paper A4 (500 sheets) 10 527,80 5.278,00\nAdjustable monitor arm 3 622,09 1.866,27\nReturned goods credit 1 -1.023,19 -1.023,19\nSubtotal 14.306,60\nVAT 19 % 2.718,25\nAmount due 17.024,85\nIBAN DE06 [REDACTED:CARD] | VAT ID [REDACTED:VAT] | [REDACTED:EMAIL] | Phone +49 [REDACTED:PHONE]84\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

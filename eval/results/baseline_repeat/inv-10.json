@@ -1,0 +1,10 @@
+{
+  "id": "inv-10",
+  "language": "german",
+  "quality": "photo",
+  "extractedData": null,
+  "schemaValid": false,
+  "latencyMs": 30030,
+  "error": "The operation was aborted due to timeout",
+  "rateLimitRetries": 0
+}
