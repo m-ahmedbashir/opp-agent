@@ -96,7 +96,9 @@ async function main() {
             } catch (error) {
                 const message = lastLoggedError ?? (error instanceof Error ? error.message : String(error));
                 const status = (error as { getStatus?: () => number }).getStatus?.();
-                if (status === 429 && rateLimitRetries < MAX_RATE_LIMIT_RETRIES) {
+                // Some providers report rate limits only in the error text, behind a generic 500 from the service.
+                const rateLimited = status === 429 || /rate.?limit|\b429\b/i.test(message);
+                if (rateLimited && rateLimitRetries < MAX_RATE_LIMIT_RETRIES) {
                     rateLimitRetries++;
                     console.log(`${entry.id}: rate limited, waiting ${RATE_LIMIT_WAIT_MS / 1000}s (retry ${rateLimitRetries})`);
                     await sleep(RATE_LIMIT_WAIT_MS);

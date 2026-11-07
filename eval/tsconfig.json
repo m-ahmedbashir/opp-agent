@@ -13,5 +13,11 @@
     "noImplicitAny": false,
     "noEmit": true
   },
-  "include": ["*.ts"]
+  "include": [
+    "*.ts",
+    "../apps/backend/src/modules/extraction/*.ts",
+    "../apps/backend/src/modules/compliance/*.ts",
+    "../apps/backend/src/common/prisma/*.ts"
+  ],
+  "exclude": ["../apps/backend/**/*.spec.ts"]
 }
