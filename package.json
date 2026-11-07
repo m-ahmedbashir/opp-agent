@@ -10,7 +10,10 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "eval:generate": "pnpm --filter eval run generate",
+    "eval:run": "pnpm --filter eval run run-eval",
+    "eval:report": "pnpm --filter eval run report"
   },
   "keywords": [],
   "author": "Ahmed Bashir",
