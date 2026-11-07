@@ -8,6 +8,7 @@ Models: `google:gemini-3.1-flash-lite` vs `google:gemini-3.1-flash-lite`. Docume
 |---|---|---|---|
 | Schema valid | 100.0% | 91.7% | -8.3 |
 | Field accuracy | 97.7% | 89.4% | -8.3 |
+| Accuracy when completed | 97.7% | 97.5% | -0.2 |
 | Line precision | 100.0% | 100.0% | +0.0 |
 | Line recall | 100.0% | 90.9% | -9.1 |
 | Line F1 | 100.0% | 95.2% | -4.8 |

@@ -1,0 +1,73 @@
+{
+  "id": "inv-12",
+  "language": "english",
+  "quality": "photo",
+  "extractedData": {
+    "invoiceNumber": "INV-10644",
+    "issueDate": "2026-09-10",
+    "dueDate": "2026-09-24",
+    "vendorName": "Bluefern Supplies Ltd",
+    "vendorAddress": "Station Lane 51, Mockford MK2 7QT",
+    "customerName": "Copperfield Tools Inc",
+    "customerAddress": "Station Lane 22, Sampleton AB1 2CD",
+    "lineItems": [
+      {
+        "description": "Ergonomic office chair",
+        "quantity": 8,
+        "unitPrice": 420.55,
+        "totalPrice": 3364.4
+      },
+      {
+        "description": "Copy paper A4 (500 sheets)",
+        "quantity": 8,
+        "unitPrice": 642.77,
+        "totalPrice": 5142.16
+      },
+      {
+        "description": "On-site installation",
+        "quantity": 8,
+        "unitPrice": 1077.28,
+        "totalPrice": 8618.24
+      },
+      {
+        "description": "Copier maintenance plan",
+        "quantity": 1,
+        "unitPrice": 674.03,
+        "totalPrice": 674.03
+      },
+      {
+        "description": "Freight delivery charge",
+        "quantity": 7,
+        "unitPrice": 718.7,
+        "totalPrice": 5030.9
+      }
+    ],
+    "subtotal": 22829.73,
+    "taxAmount": 1598.08,
+    "totalAmount": 24427.81,
+    "currency": "USD"
+  },
+  "schemaValid": true,
+  "latencyMs": 2932,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "",
+  "piiDetected": false,
+  "imagePiiDetected": true,
+  "sourceType": "IMAGE"
+}

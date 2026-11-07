@@ -1,0 +1,13 @@
+{
+  "runName": "improved_repeat",
+  "modelKey": "google:gemini-3.1-flash-lite",
+  "modelId": "gemini-3.1-flash-lite",
+  "processingMode": "vision",
+  "only": null,
+  "limit": null,
+  "documents": 12,
+  "failures": 0,
+  "gitCommit": "e7267601571d771ce2afcab4ebdf3ad9a4625043",
+  "gitDirty": false,
+  "finishedAt": "2026-11-07T16:17:07.103Z"
+}

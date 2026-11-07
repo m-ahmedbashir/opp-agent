@@ -4,9 +4,9 @@ Model: `google:gemini-3.1-flash-lite`. Mode: vision. Commit: `50d34d4`. Finished
 
 ## Overall
 
-| Group | Docs | Schema valid | Field accuracy | Line precision | Line recall | Line F1 | Mean latency | p95 latency |
-|---|---|---|---|---|---|---|---|---|
-| all | 12 | 91.7% | 89.4% | 100.0% | 90.9% | 95.2% | 5.7s | 30.0s |
+| Group | Docs | Schema valid | Field accuracy | Accuracy when completed | Line precision | Line recall | Line F1 | Mean latency | p95 latency |
+|---|---|---|---|---|---|---|---|---|---|
+| all | 12 | 91.7% | 89.4% | 97.5% | 100.0% | 90.9% | 95.2% | 5.7s | 30.0s |
 
 ## Per field
 
@@ -28,13 +28,13 @@ Line items: 40 matched, 0 wrong or extra, 4 missed.
 
 ## Per group
 
-| Group | Docs | Schema valid | Field accuracy | Line precision | Line recall | Line F1 | Mean latency | p95 latency |
-|---|---|---|---|---|---|---|---|---|
-| german | 6 | 83.3% | 80.3% | 100.0% | 83.3% | 90.9% | 9.2s | 30.0s |
-| english | 6 | 100.0% | 98.5% | 100.0% | 100.0% | 100.0% | 2.2s | 3.3s |
-| clean | 6 | 100.0% | 97.0% | 100.0% | 100.0% | 100.0% | 3.8s | 13.4s |
-| scanned | 3 | 100.0% | 97.0% | 100.0% | 100.0% | 100.0% | 3.8s | 5.2s |
-| photo | 3 | 66.7% | 66.7% | 100.0% | 60.0% | 75.0% | 11.3s | 30.0s |
+| Group | Docs | Schema valid | Field accuracy | Accuracy when completed | Line precision | Line recall | Line F1 | Mean latency | p95 latency |
+|---|---|---|---|---|---|---|---|---|---|
+| german | 6 | 83.3% | 80.3% | 96.4% | 100.0% | 83.3% | 90.9% | 9.2s | 30.0s |
+| english | 6 | 100.0% | 98.5% | 98.5% | 100.0% | 100.0% | 100.0% | 2.2s | 3.3s |
+| clean | 6 | 100.0% | 97.0% | 97.0% | 100.0% | 100.0% | 100.0% | 3.8s | 13.4s |
+| scanned | 3 | 100.0% | 97.0% | 97.0% | 100.0% | 100.0% | 100.0% | 3.8s | 5.2s |
+| photo | 3 | 66.7% | 66.7% | 100.0% | 100.0% | 60.0% | 75.0% | 11.3s | 30.0s |
 
 ## Field accuracy by group
 
