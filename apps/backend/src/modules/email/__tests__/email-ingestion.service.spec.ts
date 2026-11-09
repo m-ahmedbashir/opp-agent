@@ -186,7 +186,10 @@ function makeImapMock(messages: MockMessage[]) {
         return emitter;
     });
 
-    const instance = { connect, end, once, openBox, search, fetch };
+    // Error listeners are registered with `on`; this mock never emits errors.
+    const on = jest.fn();
+
+    const instance = { connect, end, once, on, openBox, search, fetch };
     mockedImap.mockImplementation(() => instance as any);
 
     return instance as any;
@@ -383,6 +386,31 @@ describe('EmailIngestionService', () => {
             );
             expect(invoicesService.saveInvoice).not.toHaveBeenCalled();
             expect(ordersService.saveOrder).not.toHaveBeenCalled();
+        });
+
+        it('passes image attachments on with their real type, not as PDF', async () => {
+            makeImapMock([{ uid: 16, body: Buffer.from('email body') }]);
+            mockedSimpleParser.mockResolvedValue({
+                subject: 'Invoice photo',
+                text: 'Photo of the invoice attached.',
+                from: { text: 'billing@company.com' },
+                attachments: [
+                    { filename: 'invoice.jpg', contentType: 'application/octet-stream', content: Buffer.from('jpeg bytes') },
+                    { filename: 'scan.png', contentType: 'image/png', content: Buffer.from('png bytes') },
+                    { filename: 'notes.docx', contentType: 'application/octet-stream', content: Buffer.from('docx bytes') },
+                ],
+            });
+
+            await service.syncAccount('acc-1');
+
+            expect(extractionService.processFile).toHaveBeenCalledWith(
+                expect.objectContaining({ originalname: 'invoice.jpg', mimetype: 'image/jpeg' }),
+                expect.any(String),
+                'groq:llama-4-scout',
+                undefined,
+                'vision',
+                'auto',
+            );
         });
 
         it('skips emails with no body text and no document attachments', async () => {
