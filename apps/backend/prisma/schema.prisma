@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  clerkId          String   @unique
+  extractionMode   String   @default("MANUAL_REVIEW") // "AUTO_APPROVE" | "MANUAL_REVIEW"
+  modelKey         String   @default("groq:llama-4-scout") // key into MODEL_REGISTRY (apps/backend/src/modules/extraction/model-registry.ts)
+  encryptedApiKey  String?  // AES-256-GCM ciphertext (see common/crypto/) — NEVER the plaintext key. Null = use the app's shared key.
+  processingMode   String   @default("vision") // "vision" | "local-ocr" — how images/scanned PDFs get read
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  documents        Document[]
+  purchaseOrders   PurchaseOrder[]
+  emailAccounts  EmailAccount[]
+}
+
+model Document {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Which document-type registry entry (see extraction/document-type-registry.ts) this was extracted with.
+  documentType     String   // "invoice" | "receipt" | "resume"
+
+  // The type-specific extracted fields (shape matches that type's Zod schema in @opp/shared).
+  data             Json
+
+  // AI confidence — stored alongside the extracted data
+  fieldConfidence  Json?    // { <field>: 0.95, ... }
+  avgConfidence    Float?
+
+  // Status
+  status           String   @default("APPROVED") // APPROVED | REJECTED | PENDING
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([documentType])
+}
+
+model PurchaseOrder {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  poNumber         String
+  orderDate        String?
+  customerName     String?
+  customerEmail    String?
+  shippingAddress  String?
+  currency         String?
+  totalAmount      Float?
+
+  // HITL lifecycle
+  status           String   @default("PENDING_REVIEW") // PENDING_REVIEW | APPROVED | REJECTED
+
+  // AI confidence from extraction
+  fieldConfidence  Json?
+  avgConfidence    Float?
+
+  // Set when a later extraction produces the same poNumber (for this user)
+  // with different data — e.g. a PO email arriving twice with an updated
+  // total or line items. Rather than creating a second row, the differing
+  // data is parked here so the UI can show "saved vs. new" and the user
+  // decides whether to accept it (see OrdersService.acceptRevision /
+  // dismissRevision). Null when there's no pending revision.
+  pendingRevision  Json?
+
+  lineItems        OrderLineItem[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderLineItem {
+  id               String   @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  lineNumber       Int
+  rawDescription   String
+  customerSku      String?
+  matchedSystemSku String?
+  skuMatchScore    Float    @default(0)
+  // "auto" = ProductCatalogService matched it, "manual" = the user picked it
+  // via the override dropdown. Needed because a manual pick also gets
+  // skuMatchScore 1.0 — without this, the UI can't tell an algorithmic
+  // "Auto-matched SKU" apart from a user's own correction.
+  skuMatchSource   String   @default("auto")
+  quantity         Int
+  unitPrice        Float?
+  totalAmount      Float?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([purchaseOrderId])
+}
+
+model EmailAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  email             String   // display address
+  provider          String   @default("imap") // "imap" | future: "gmail-oauth" | "outlook-oauth"
+  imapHost          String
+  imapPort          Int      @default(993)
+  imapSecure        Boolean  @default(true)
+  username          String
+
+  // AES-256-GCM ciphertext — see common/crypto/encryption.service.ts
+  encryptedPassword String
+
+  enabled           Boolean  @default(true)
+  lastProcessedUid  Int      @default(0)
+  lastSyncAt        DateTime @default(now())
+  lastSyncStatus    String   @default("PENDING") // PENDING | OK | ERROR
+  lastSyncError     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ExtractionLog {
+  id               String   @id @default(cuid())
+
+  // What came in
+  sourceType       String   // PDF | IMAGE | TEXT | CSV | JSON
+  documentType     String?  // "invoice" | "receipt" | "resume" — null for old rows predating this field
+  originalFileName String?
+  fileSizeBytes    Int?
+
+  // What the pipeline measured
+  piiDetected      Boolean  @default(false)
+  imagePiiDetected Boolean  @default(false) // PII visible in image pixels — text masking can't reach this
+  ocrUsed          Boolean  @default(false) // true when local Tesseract OCR ran instead of a vision model
+  processingTimeMs Int
+
+  // AI confidence for this extraction
+  avgConfidence    Float?
+
+  // Outcome
+  success          Boolean  @default(true)
+  errorMessage     String?
+  invoiceId        String?  // set when the user saves/approves the invoice
+
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sourceType])
+  @@index([success])
+}

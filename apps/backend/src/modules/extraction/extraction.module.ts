@@ -1,17 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ComplianceModule } from '../compliance/compliance.module';
+import { PrismaModule } from '../../common/prisma/prisma.module';
+import { UsersModule } from '../users/users.module';
 import { ExtractionController } from './extraction.controller';
 import { ExtractionService } from './extraction.service';
+import { OcrService } from './ocr.service';
 
-/**
- * ExtractionModule
- *
- * Imports ComplianceModule so that ComplianceService is available
- * for injection into ExtractionService via NestJS's DI container.
- */
 @Module({
-    imports: [ComplianceModule],
+    imports: [ComplianceModule, PrismaModule, UsersModule],
     controllers: [ExtractionController],
-    providers: [ExtractionService],
+    providers: [ExtractionService, OcrService],
+    exports: [ExtractionService],
 })
 export class ExtractionModule { }
