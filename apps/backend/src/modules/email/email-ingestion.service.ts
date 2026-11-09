@@ -306,28 +306,36 @@ export class EmailIngestionService implements OnModuleInit {
         return parts.join('\n\n');
     }
 
-    private collectDocumentAttachments(parsed: ParsedMail): Express.Multer.File[] {
-        const supportedMimeTypes = new Set([
-            'application/pdf',
-            'image/png',
-            'image/jpeg',
-            'image/webp',
-            'text/plain',
-            'text/csv',
-            'application/json',
-        ]);
+    /** Supported attachment types, by file extension. Used when the email's own content type is missing or generic. */
+    private static readonly MIME_BY_EXTENSION: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.webp': 'image/webp',
+        '.txt': 'text/plain',
+        '.csv': 'text/csv',
+        '.json': 'application/json',
+    };
 
+    /** The attachment's real type, so images aren't sent down the PDF path. Null if unsupported. */
+    private resolveAttachmentMimeType(att: ParsedMail['attachments'][number]): string | null {
+        const supported = Object.values(EmailIngestionService.MIME_BY_EXTENSION);
+        if (supported.includes(att.contentType)) return att.contentType;
+        const name = att.filename?.toLowerCase() ?? '';
+        const extension = Object.keys(EmailIngestionService.MIME_BY_EXTENSION).find((ext) => name.endsWith(ext));
+        return extension ? EmailIngestionService.MIME_BY_EXTENSION[extension] : null;
+    }
+
+    private collectDocumentAttachments(parsed: ParsedMail): Express.Multer.File[] {
         return parsed.attachments
-            .filter((att) => {
-                if (supportedMimeTypes.has(att.contentType)) return true;
-                const name = att.filename?.toLowerCase() ?? '';
-                return name.endsWith('.pdf') || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.txt') || name.endsWith('.csv') || name.endsWith('.json');
-            })
-            .map((att, index) => ({
+            .map((att) => ({ att, mimetype: this.resolveAttachmentMimeType(att) }))
+            .filter((entry): entry is { att: typeof entry.att; mimetype: string } => entry.mimetype !== null)
+            .map(({ att, mimetype }, index) => ({
                 fieldname: 'file',
                 originalname: att.filename ?? `attachment-${index + 1}.pdf`,
                 encoding: '7bit',
-                mimetype: 'application/pdf',
+                mimetype,
                 buffer: att.content,
                 size: att.content.length,
                 stream: null as any,
@@ -427,7 +435,9 @@ export class EmailIngestionService implements OnModuleInit {
                 });
             });
 
-            client.once('error', (err: Error) => {
+            // `on`, not `once`: a second 'error' event with no listener would crash the process.
+            // Later calls are harmless because the promise can only settle once.
+            client.on('error', (err: Error) => {
                 this.logger.error(`IMAP connection error for ${account.imapHost}:${account.imapPort}: ${err.message}`);
                 client.end();
                 reject(err);

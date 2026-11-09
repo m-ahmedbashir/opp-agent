@@ -78,7 +78,9 @@ export class EmailAccountService {
             throw new BadRequestException('Email, username, password, and IMAP host are required');
         }
 
-        await this.testImapConnection(dto);
+        // Start from the inbox's current newest message, so connecting an existing
+        // mailbox doesn't send years of old (often personal) email to the model.
+        const newestUid = await this.testImapConnection(dto);
 
         const encryptedPassword = this.encryptionService.encrypt(dto.password);
 
@@ -97,6 +99,7 @@ export class EmailAccountService {
                 imapSecure: dto.imapSecure,
                 username: dto.username,
                 encryptedPassword,
+                lastProcessedUid: newestUid,
             },
         });
 
@@ -156,7 +159,17 @@ export class EmailAccountService {
         return this.encryptionService.decrypt(encryptedPassword);
     }
 
-    async testImapConnection(dto: Pick<CreateEmailAccountDto, 'imapHost' | 'imapPort' | 'imapSecure' | 'username' | 'password'>): Promise<void> {
+    /**
+     * Logs in and opens INBOX read-only to prove the credentials work.
+     *
+     * @returns The UID of the newest message currently in INBOX (0 if empty).
+     */
+    async testImapConnection(dto: Pick<CreateEmailAccountDto, 'imapHost' | 'imapPort' | 'imapSecure' | 'username' | 'password'>): Promise<number> {
+        // Port 993 is IMAP over TLS; a plain connection to it never completes, so fail fast with a clear reason.
+        if (dto.imapPort === 993 && !dto.imapSecure) {
+            throw new BadRequestException('Port 993 requires TLS/SSL. Turn on "Use TLS/SSL", or use port 143 for an unencrypted connection.');
+        }
+
         return new Promise((resolve, reject) => {
             const client = new Imap({
                 host: dto.imapHost,
@@ -166,16 +179,31 @@ export class EmailAccountService {
                 password: dto.password,
                 tlsOptions: { rejectUnauthorized: false },
                 connTimeout: 15000,
+                // Same reason as EmailIngestionService: the 5s default is too short for Gmail's auth handshake.
+                authTimeout: 30000,
             });
+
+            let settled = false;
+            const finish = (settle: () => void) => {
+                if (settled) return;
+                settled = true;
+                client.end();
+                settle();
+            };
 
             client.once('ready', () => {
-                client.end();
-                resolve();
+                client.openBox('INBOX', true, (err, box) => {
+                    if (err) {
+                        return finish(() => reject(new UnauthorizedException(`IMAP connection failed: ${err.message}`)));
+                    }
+                    finish(() => resolve(Math.max(0, (box?.uidnext ?? 1) - 1)));
+                });
             });
 
-            client.once('error', (err: Error) => {
-                client.end();
-                reject(new UnauthorizedException(`IMAP connection failed: ${err.message}`));
+            // `on`, not `once`: node-imap can emit more than one error for a single failed
+            // connection, and an 'error' event with no listener crashes the whole process.
+            client.on('error', (err: Error) => {
+                finish(() => reject(new UnauthorizedException(`IMAP connection failed: ${err.message}`)));
             });
 
             client.connect();

@@ -59,19 +59,26 @@ function makeEncryptionMock() {
     } as unknown as EncryptionService;
 }
 
-function makeImapMock(eventHandlers: { ready?: () => void; error?: (err: Error) => void }) {
+function makeImapMock(eventHandlers: { ready?: () => void; error?: (err: Error) => void; uidnext?: number; errorCount?: number }) {
     const connect = jest.fn();
     const end = jest.fn();
-    const once = jest.fn().mockImplementation((event: string, handler: any) => {
+    const register = (event: string, handler: any) => {
         if (event === 'ready' && eventHandlers.ready) {
             setImmediate(() => handler());
         }
         if (event === 'error' && eventHandlers.error) {
-            setImmediate(() => handler(new Error('IMAP error')));
+            for (let i = 0; i < (eventHandlers.errorCount ?? 1); i++) {
+                setImmediate(() => handler(new Error('IMAP error')));
+            }
         }
-        return { connect, end, once } as any;
-    });
-    return { connect, end, once };
+        return { connect, end, once, on, openBox } as any;
+    };
+    const once = jest.fn().mockImplementation(register);
+    const on = jest.fn().mockImplementation(register);
+    const openBox = jest.fn().mockImplementation((_box: string, _readonly: boolean, cb: any) =>
+        cb(null, { uidnext: eventHandlers.uidnext ?? 1 }),
+    );
+    return { connect, end, once, on, openBox };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -100,8 +107,8 @@ describe('EmailAccountService', () => {
 
     describe('createAccount()', () => {
         it('encrypts the password and stores the account after a successful IMAP test', async () => {
-            const { connect, end, once } = makeImapMock({ ready: () => undefined });
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            const { connect, end, once, on, openBox } = makeImapMock({ ready: () => undefined });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
 
             const result = await service.createAccount('user-1', validDto);
 
@@ -119,19 +126,42 @@ describe('EmailAccountService', () => {
         });
 
         it('throws UnauthorizedException when the IMAP test fails', async () => {
-            const { connect, end, once } = makeImapMock({ error: () => undefined });
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            const { connect, end, once, on, openBox } = makeImapMock({ error: () => undefined });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
 
             await expect(service.createAccount('user-1', validDto)).rejects.toThrow(UnauthorizedException);
             expect(end).toHaveBeenCalled();
             expect(prisma.emailAccount.create).not.toHaveBeenCalled();
         });
+
+        it('starts syncing from the newest message already in the inbox', async () => {
+            const { connect, end, once, on, openBox } = makeImapMock({ ready: () => undefined, uidnext: 10041 });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
+
+            const result = await service.createAccount('user-1', validDto);
+
+            expect(openBox).toHaveBeenCalledWith('INBOX', true, expect.any(Function));
+            expect(result.lastProcessedUid).toBe(10040);
+        });
+
+        it('rejects port 993 without TLS before trying to connect', async () => {
+            await expect(service.createAccount('user-1', { ...validDto, imapSecure: false })).rejects.toThrow(BadRequestException);
+            expect(mockedImap).not.toHaveBeenCalled();
+        });
+
+        it('settles once when the connection reports several errors', async () => {
+            const { connect, end, once, on, openBox } = makeImapMock({ error: () => undefined, errorCount: 3 });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
+
+            await expect(service.createAccount('user-1', validDto)).rejects.toThrow(UnauthorizedException);
+            expect(end).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('getAccountsByUser()', () => {
         it('returns accounts without credentials', async () => {
-            const { connect, end, once } = makeImapMock({ ready: () => undefined });
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            const { connect, end, once, on, openBox } = makeImapMock({ ready: () => undefined });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
             await service.createAccount('user-1', validDto);
 
             const accounts = await service.getAccountsByUser('user-1');
@@ -145,12 +175,12 @@ describe('EmailAccountService', () => {
 
     describe('updateAccount()', () => {
         it('updates a password by re-testing the connection and re-encrypting', async () => {
-            const { connect, end, once } = makeImapMock({ ready: () => undefined });
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            const { connect, end, once, on, openBox } = makeImapMock({ ready: () => undefined });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
             await service.createAccount('user-1', validDto);
 
             jest.clearAllMocks();
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
             const result = await service.updateAccount('acc-1', 'user-1', { password: 'new-secret' });
 
             expect(connect).toHaveBeenCalled();
@@ -165,8 +195,8 @@ describe('EmailAccountService', () => {
 
     describe('deleteAccount()', () => {
         it('removes the account', async () => {
-            const { connect, end, once } = makeImapMock({ ready: () => undefined });
-            mockedImap.mockImplementation(() => ({ connect, end, once } as any));
+            const { connect, end, once, on, openBox } = makeImapMock({ ready: () => undefined });
+            mockedImap.mockImplementation(() => ({ connect, end, once, on, openBox } as any));
             await service.createAccount('user-1', validDto);
 
             await service.deleteAccount('acc-1', 'user-1');
