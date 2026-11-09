@@ -1,0 +1,49 @@
+{
+  "id": "inv-02",
+  "language": "german",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": "RE20260047",
+    "issueDate": "2026-10-13",
+    "dueDate": "2026-10-27",
+    "vendorName": "Sennestadt Logistik GmbH",
+    "vendorAddress": "Am Sparrenberg 69, 33602 Testhausen",
+    "customerName": "Lindenhof Software GmbH",
+    "customerAddress": "Lindenstraße 16, 50667 Beispielburg",
+    "lineItems": [
+      {
+        "description": "Bürostuhl Ergo Plus",
+        "quantity": 4,
+        "unitPrice": 851.21,
+        "totalPrice": 3404.84
+      }
+    ],
+    "subtotal": 3404.84,
+    "taxAmount": 238.34,
+    "totalAmount": 3643.18,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 13058,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "Sennestadt Logistik GmbH\nAm Sparrenberg 69, 33602 Testhausen\nRechnung Rechnungsnummer: RE20260047\nRechnungsdatum: 2026-10-13\nFällig am: 2026-10-27\nAlle Beträge in EUR\nRechnungsempfänger\nLindenhof Software GmbH\nLindenstraße 16, 50667 Beispielburg\nBeschreibung Menge Einzelpreis Gesamt\nBürostuhl Ergo Plus 4 851,21 3.404,84\nZwischensumme (netto) 3.404,84\nMwSt. 7 % 238,34\nGesamtbetrag 3.643,18\nIBAN DE91 [REDACTED:CARD] | USt-IdNr. [REDACTED:VAT] | [REDACTED:EMAIL] | Tel. +49 [REDACTED:PHONE]78\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

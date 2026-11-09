@@ -16,17 +16,24 @@ export class ComplianceService {
     private static readonly EMAIL_PATTERN =
         /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 
-    /** Phone numbers: international / local variants, e.g. +1-800-555-0199, (555) 123-4567 */
+    /**
+     * Phone numbers: international / local variants, e.g. +1-800-555-0199, (555) 123-4567.
+     * Skips digits attached to a leading letter, which are IDs like INV20261188.
+     */
     private static readonly PHONE_PATTERN =
-        /(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?/g;
+        /(?<![A-Za-z]\d*)(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?/g;
 
     /** Credit / debit card numbers: 13–19 digit sequences (optionally space/dash-separated) */
     private static readonly CREDIT_CARD_PATTERN =
         /\b(?:\d[ \-]?){13,19}\b/g;
 
-    /** VAT / tax identification numbers: e.g. GB123456789, DE123456789 */
+    /**
+     * VAT / tax identification numbers: e.g. GB123456789, DE123456789.
+     * Needs a real VAT country prefix and at least one digit, so invoice numbers
+     * (RE20260047, INV20261188) and uppercase words stay readable for the model.
+     */
     private static readonly VAT_PATTERN =
-        /\b[A-Z]{2}[0-9A-Z]{8,12}\b/g;
+        /\b(?:AT|BE|BG|CH|CY|CZ|DE|DK|EE|EL|ES|FI|FR|GB|HR|HU|IE|IT|LT|LU|LV|MT|NL|NO|PL|PT|RO|SE|SI|SK|XI)(?=[0-9A-Z]*\d)[0-9A-Z]{8,12}\b/g;
 
     /** IBAN: e.g. GB29 NWBK 6016 1331 9268 19 */
     private static readonly IBAN_PATTERN =

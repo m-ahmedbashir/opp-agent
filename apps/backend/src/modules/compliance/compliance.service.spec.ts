@@ -7,6 +7,35 @@ describe('ComplianceService', () => {
         service = new ComplianceService();
     });
 
+    // ── VAT pattern ───────────────────────────────────────────────────────────
+
+    describe('VAT masking', () => {
+        it.each(['DE123456789', 'GB123456789', 'FR12345678901', 'NL123456789B01', 'ATU12345678'])(
+            'should redact the VAT ID %s',
+            (vatId) => {
+                expect(service.mask(`VAT ID ${vatId}`)).toBe('VAT ID [REDACTED:VAT]');
+            },
+        );
+
+        it.each(['RE20260047', 'INV20261188', 'RECHNUNGSNUMMER', 'DEUTSCHLAND'])(
+            'should leave %s readable',
+            (text) => {
+                expect(service.mask(`Ref ${text}`)).toBe(`Ref ${text}`);
+            },
+        );
+    });
+
+    // ── Phone pattern ─────────────────────────────────────────────────────────
+
+    describe('phone masking next to IDs', () => {
+        it.each(['Tel. 555-234-5678', 'Tel. (555) 234-5678', 'Tel. +49 555 648914', 'Tel: 5552345'])(
+            'should still redact digits in "%s"',
+            (text) => {
+                expect(service.mask(text)).toContain('[REDACTED:PHONE]');
+            },
+        );
+    });
+
     // ── mask() ────────────────────────────────────────────────────────────────
 
     describe('mask()', () => {

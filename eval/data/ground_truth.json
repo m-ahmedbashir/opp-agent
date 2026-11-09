@@ -1,0 +1,686 @@
+[
+  {
+    "id": "inv-01",
+    "file": "inv-01-german-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "german",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "dotted",
+      "numberStyle": "german",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "RE-2026-0412",
+      "issueDate": "2026-10-15",
+      "dueDate": "2026-11-14",
+      "vendorName": "Nordlicht Bürotechnik GmbH",
+      "vendorAddress": "Herforder Allee 40, 33602 Testhausen",
+      "customerName": "Weserblick Handels AG",
+      "customerAddress": "Schillerplatz 61, 10115 Musterstadt",
+      "lineItems": [
+        {
+          "description": "Bürostuhl Ergo Plus",
+          "quantity": 7,
+          "unitPrice": 732.92,
+          "totalPrice": 5130.44
+        },
+        {
+          "description": "Schulung Datenschutz",
+          "quantity": 2,
+          "unitPrice": 257.28,
+          "totalPrice": 514.56
+        },
+        {
+          "description": "Tonerkartusche schwarz",
+          "quantity": 1,
+          "unitPrice": 1183.01,
+          "totalPrice": 1183.01
+        }
+      ],
+      "subtotal": 6828.01,
+      "taxAmount": 1297.32,
+      "totalAmount": 8125.33,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE35554313330318186885",
+      "vatId": "DE609860373",
+      "email": "billing@nordlicht.example.com",
+      "phone": "+49 555 206261",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-02",
+    "file": "inv-02-german-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "german",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "iso",
+      "numberStyle": "german",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "RE20260047",
+      "issueDate": "2026-10-13",
+      "dueDate": "2026-10-27",
+      "vendorName": "Sennestadt Logistik GmbH",
+      "vendorAddress": "Am Sparrenberg 69, 33602 Testhausen",
+      "customerName": "Lindenhof Software GmbH",
+      "customerAddress": "Lindenstraße 16, 50667 Beispielburg",
+      "lineItems": [
+        {
+          "description": "Bürostuhl Ergo Plus",
+          "quantity": 4,
+          "unitPrice": 851.21,
+          "totalPrice": 3404.84
+        }
+      ],
+      "subtotal": 3404.84,
+      "taxAmount": 238.34,
+      "totalAmount": 3643.18,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE91726903570518262632",
+      "vatId": "DE824725452",
+      "email": "billing@sennestadt.example.com",
+      "phone": "+49 555 435678",
+      "vatRate": 7
+    }
+  },
+  {
+    "id": "inv-03",
+    "file": "inv-03-german-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "german",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "long",
+      "numberStyle": "german",
+      "discount": true,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "2026/0093",
+      "issueDate": "2026-09-22",
+      "dueDate": "2026-10-06",
+      "vendorName": "Lindenhof Software GmbH",
+      "vendorAddress": "Lindenstraße 20, 50667 Beispielburg",
+      "customerName": "Nordlicht Bürotechnik GmbH",
+      "customerAddress": "Lindenstraße 12, 10115 Musterstadt",
+      "lineItems": [
+        {
+          "description": "Schulung Datenschutz",
+          "quantity": 8,
+          "unitPrice": 962.99,
+          "totalPrice": 7703.92
+        },
+        {
+          "description": "Lizenz Buchhaltungssoftware",
+          "quantity": 7,
+          "unitPrice": 351.01,
+          "totalPrice": 2457.07
+        },
+        {
+          "description": "Bürostuhl Ergo Plus",
+          "quantity": 11,
+          "unitPrice": 693.91,
+          "totalPrice": 7633.01
+        },
+        {
+          "description": "Monitorhalterung schwenkbar",
+          "quantity": 11,
+          "unitPrice": 943.95,
+          "totalPrice": 10383.45
+        },
+        {
+          "description": "Tonerkartusche schwarz",
+          "quantity": 11,
+          "unitPrice": 29.32,
+          "totalPrice": 322.52
+        },
+        {
+          "description": "Aktenvernichter P-4",
+          "quantity": 6,
+          "unitPrice": 658.3,
+          "totalPrice": 3949.8
+        },
+        {
+          "description": "Montage vor Ort",
+          "quantity": 6,
+          "unitPrice": 1026.47,
+          "totalPrice": 6158.82
+        },
+        {
+          "description": "Rabatt 5 %",
+          "quantity": 1,
+          "unitPrice": -1930.43,
+          "totalPrice": -1930.43
+        }
+      ],
+      "subtotal": 36678.16,
+      "taxAmount": 6968.85,
+      "totalAmount": 43647.01,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE36396314336844715543",
+      "vatId": "DE100092488",
+      "email": "billing@lindenhof.example.com",
+      "phone": "+49 555 648914",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-04",
+    "file": "inv-04-english-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "english",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "long",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "INV-10482",
+      "issueDate": "2026-09-25",
+      "dueDate": "2026-10-09",
+      "vendorName": "Bluefern Supplies Ltd",
+      "vendorAddress": "Harbour Road 45, Exampleville EX4 5MP",
+      "customerName": "Greyfriars Consulting Ltd",
+      "customerAddress": "Elm Close 11, Exampleville EX4 5MP",
+      "lineItems": [
+        {
+          "description": "On-site installation",
+          "quantity": 9,
+          "unitPrice": 1274.86,
+          "totalPrice": 11473.74
+        },
+        {
+          "description": "Ergonomic office chair",
+          "quantity": 2,
+          "unitPrice": 680.23,
+          "totalPrice": 1360.46
+        },
+        {
+          "description": "Data protection training",
+          "quantity": 9,
+          "unitPrice": 631.72,
+          "totalPrice": 5685.48
+        },
+        {
+          "description": "Cross-cut paper shredder",
+          "quantity": 8,
+          "unitPrice": 1294.84,
+          "totalPrice": 10358.72
+        },
+        {
+          "description": "Black toner cartridge",
+          "quantity": 12,
+          "unitPrice": 617.94,
+          "totalPrice": 7415.28
+        }
+      ],
+      "subtotal": 36293.68,
+      "taxAmount": 6895.8,
+      "totalAmount": 43189.48,
+      "currency": "USD"
+    },
+    "printedOnly": {
+      "iban": "DE07839960411978438539",
+      "vatId": "DE186426093",
+      "email": "billing@bluefern.example.com",
+      "phone": "+49 555 859941",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-05",
+    "file": "inv-05-english-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "english",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "iso",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "INV20261188",
+      "issueDate": "2026-10-19",
+      "dueDate": null,
+      "vendorName": "Copperfield Tools Inc",
+      "vendorAddress": "Maple Avenue 65, Mockford MK2 7QT",
+      "customerName": "Greyfriars Consulting Ltd",
+      "customerAddress": "Harbour Road 12, Exampleville EX4 5MP",
+      "lineItems": [
+        {
+          "description": "Accounting software licence",
+          "quantity": 9,
+          "unitPrice": 12.15,
+          "totalPrice": 109.35
+        },
+        {
+          "description": "Data protection training",
+          "quantity": 3,
+          "unitPrice": 202.49,
+          "totalPrice": 607.47
+        }
+      ],
+      "subtotal": 716.82,
+      "taxAmount": 50.18,
+      "totalAmount": 767,
+      "currency": "GBP"
+    },
+    "printedOnly": {
+      "iban": "DE60496387810602226638",
+      "vatId": "DE940635978",
+      "email": "billing@copperfield.example.com",
+      "phone": "+49 555 636849",
+      "vatRate": 7
+    }
+  },
+  {
+    "id": "inv-06",
+    "file": "inv-06-english-clean.pdf",
+    "mimeType": "application/pdf",
+    "language": "english",
+    "quality": "clean",
+    "variation": {
+      "dateStyle": "dotted",
+      "numberStyle": "german",
+      "discount": false,
+      "negativeLine": true
+    },
+    "invoice": {
+      "invoiceNumber": "CN-3307",
+      "issueDate": "2026-10-10",
+      "dueDate": "2026-11-09",
+      "vendorName": "Greyfriars Consulting Ltd",
+      "vendorAddress": "Elm Close 28, Sampleton AB1 2CD",
+      "customerName": "Oakmere Print Works LLC",
+      "customerAddress": "Elm Close 55, Fakeham FK9 1ZZ",
+      "lineItems": [
+        {
+          "description": "Ergonomic office chair",
+          "quantity": 8,
+          "unitPrice": 1023.19,
+          "totalPrice": 8185.52
+        },
+        {
+          "description": "Copy paper A4 (500 sheets)",
+          "quantity": 10,
+          "unitPrice": 527.8,
+          "totalPrice": 5278
+        },
+        {
+          "description": "Adjustable monitor arm",
+          "quantity": 3,
+          "unitPrice": 622.09,
+          "totalPrice": 1866.27
+        },
+        {
+          "description": "Returned goods credit",
+          "quantity": 1,
+          "unitPrice": -1023.19,
+          "totalPrice": -1023.19
+        }
+      ],
+      "subtotal": 14306.6,
+      "taxAmount": 2718.25,
+      "totalAmount": 17024.85,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE06930904303292135573",
+      "vatId": "DE138188437",
+      "email": "billing@greyfriars.example.com",
+      "phone": "+49 555 196584",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-07",
+    "file": "inv-07-german-scanned.pdf",
+    "mimeType": "application/pdf",
+    "language": "german",
+    "quality": "scanned",
+    "variation": {
+      "dateStyle": "dotted",
+      "numberStyle": "german",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "RE-2026-0588",
+      "issueDate": "2026-10-09",
+      "dueDate": "2026-11-08",
+      "vendorName": "Weserblick Handels AG",
+      "vendorAddress": "Münzweg 26, 80331 Probedorf",
+      "customerName": "Falkenried Elektro OHG",
+      "customerAddress": "Am Sparrenberg 13, 50667 Beispielburg",
+      "lineItems": [
+        {
+          "description": "Bürostuhl Ergo Plus",
+          "quantity": 10,
+          "unitPrice": 376.82,
+          "totalPrice": 3768.2
+        },
+        {
+          "description": "Lizenz Buchhaltungssoftware",
+          "quantity": 11,
+          "unitPrice": 941.79,
+          "totalPrice": 10359.69
+        },
+        {
+          "description": "Versandkosten Spedition",
+          "quantity": 5,
+          "unitPrice": 44.76,
+          "totalPrice": 223.8
+        },
+        {
+          "description": "Tonerkartusche schwarz",
+          "quantity": 10,
+          "unitPrice": 1151.59,
+          "totalPrice": 11515.9
+        },
+        {
+          "description": "Monitorhalterung schwenkbar",
+          "quantity": 7,
+          "unitPrice": 881.43,
+          "totalPrice": 6170.01
+        },
+        {
+          "description": "Schulung Datenschutz",
+          "quantity": 1,
+          "unitPrice": 679.08,
+          "totalPrice": 679.08
+        }
+      ],
+      "subtotal": 32716.68,
+      "taxAmount": 6216.17,
+      "totalAmount": 38932.85,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE79525494023907078017",
+      "vatId": "DE515619484",
+      "email": "billing@weserblick.example.com",
+      "phone": "+49 555 361869",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-08",
+    "file": "inv-08-german-scanned.pdf",
+    "mimeType": "application/pdf",
+    "language": "german",
+    "quality": "scanned",
+    "variation": {
+      "dateStyle": "iso",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "R-77120",
+      "issueDate": "2026-10-23",
+      "dueDate": null,
+      "vendorName": "Sennestadt Logistik GmbH",
+      "vendorAddress": "Herforder Allee 42, 10115 Musterstadt",
+      "customerName": "Lindenhof Software GmbH",
+      "customerAddress": "Lindenstraße 52, 80331 Probedorf",
+      "lineItems": [
+        {
+          "description": "Schulung Datenschutz",
+          "quantity": 4,
+          "unitPrice": 762.29,
+          "totalPrice": 3049.16
+        },
+        {
+          "description": "Lizenz Buchhaltungssoftware",
+          "quantity": 10,
+          "unitPrice": 1231.59,
+          "totalPrice": 12315.9
+        }
+      ],
+      "subtotal": 15365.06,
+      "taxAmount": 1075.55,
+      "totalAmount": 16440.61,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE30071748420833120622",
+      "vatId": "DE433858447",
+      "email": "billing@sennestadt.example.com",
+      "phone": "+49 555 926506",
+      "vatRate": 7
+    }
+  },
+  {
+    "id": "inv-09",
+    "file": "inv-09-english-scanned.pdf",
+    "mimeType": "application/pdf",
+    "language": "english",
+    "quality": "scanned",
+    "variation": {
+      "dateStyle": "long",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "INV-10533",
+      "issueDate": "2026-10-10",
+      "dueDate": "2026-10-24",
+      "vendorName": "Copperfield Tools Inc",
+      "vendorAddress": "King Street 41, Exampleville EX4 5MP",
+      "customerName": "Bluefern Supplies Ltd",
+      "customerAddress": "Maple Avenue 54, Fakeham FK9 1ZZ",
+      "lineItems": [
+        {
+          "description": "Ergonomic office chair",
+          "quantity": 5,
+          "unitPrice": 229.59,
+          "totalPrice": 1147.95
+        },
+        {
+          "description": "Copy paper A4 (500 sheets)",
+          "quantity": 7,
+          "unitPrice": 180.05,
+          "totalPrice": 1260.35
+        },
+        {
+          "description": "Copier maintenance plan",
+          "quantity": 10,
+          "unitPrice": 625.45,
+          "totalPrice": 6254.5
+        }
+      ],
+      "subtotal": 8662.8,
+      "taxAmount": 1645.93,
+      "totalAmount": 10308.73,
+      "currency": "USD"
+    },
+    "printedOnly": {
+      "iban": "DE30490855546806629660",
+      "vatId": "DE647569002",
+      "email": "billing@copperfield.example.com",
+      "phone": "+49 555 191308",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-10",
+    "file": "inv-10-german-photo.jpg",
+    "mimeType": "image/jpeg",
+    "language": "german",
+    "quality": "photo",
+    "variation": {
+      "dateStyle": "dotted",
+      "numberStyle": "german",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "RE-2026-0701",
+      "issueDate": "2026-10-25",
+      "dueDate": "2026-11-24",
+      "vendorName": "Lindenhof Software GmbH",
+      "vendorAddress": "Lindenstraße 90, 10115 Musterstadt",
+      "customerName": "Teutoburger Druckhaus KG",
+      "customerAddress": "Schillerplatz 19, 33602 Testhausen",
+      "lineItems": [
+        {
+          "description": "Bürostuhl Ergo Plus",
+          "quantity": 10,
+          "unitPrice": 714.22,
+          "totalPrice": 7142.2
+        },
+        {
+          "description": "Monitorhalterung schwenkbar",
+          "quantity": 9,
+          "unitPrice": 1065.45,
+          "totalPrice": 9589.05
+        },
+        {
+          "description": "Versandkosten Spedition",
+          "quantity": 10,
+          "unitPrice": 881.5,
+          "totalPrice": 8815
+        },
+        {
+          "description": "Schulung Datenschutz",
+          "quantity": 3,
+          "unitPrice": 836.19,
+          "totalPrice": 2508.57
+        }
+      ],
+      "subtotal": 28054.82,
+      "taxAmount": 1963.84,
+      "totalAmount": 30018.66,
+      "currency": "EUR"
+    },
+    "printedOnly": {
+      "iban": "DE44996785703668770516",
+      "vatId": "DE382972901",
+      "email": "billing@lindenhof.example.com",
+      "phone": "+49 555 228954",
+      "vatRate": 7
+    }
+  },
+  {
+    "id": "inv-11",
+    "file": "inv-11-english-photo.jpg",
+    "mimeType": "image/jpeg",
+    "language": "english",
+    "quality": "photo",
+    "variation": {
+      "dateStyle": "long",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "INV-10610",
+      "issueDate": "2026-10-04",
+      "dueDate": "2026-11-03",
+      "vendorName": "Greyfriars Consulting Ltd",
+      "vendorAddress": "Harbour Road 17, Exampleville EX4 5MP",
+      "customerName": "Bluefern Supplies Ltd",
+      "customerAddress": "Elm Close 3, Exampleville EX4 5MP",
+      "lineItems": [
+        {
+          "description": "Freight delivery charge",
+          "quantity": 10,
+          "unitPrice": 493.71,
+          "totalPrice": 4937.1
+        }
+      ],
+      "subtotal": 4937.1,
+      "taxAmount": 938.05,
+      "totalAmount": 5875.15,
+      "currency": "GBP"
+    },
+    "printedOnly": {
+      "iban": "DE51871281891063511331",
+      "vatId": "DE819528776",
+      "email": "billing@greyfriars.example.com",
+      "phone": "+49 555 191611",
+      "vatRate": 19
+    }
+  },
+  {
+    "id": "inv-12",
+    "file": "inv-12-english-photo.jpg",
+    "mimeType": "image/jpeg",
+    "language": "english",
+    "quality": "photo",
+    "variation": {
+      "dateStyle": "iso",
+      "numberStyle": "english",
+      "discount": false,
+      "negativeLine": false
+    },
+    "invoice": {
+      "invoiceNumber": "INV-10644",
+      "issueDate": "2026-09-10",
+      "dueDate": "2026-09-24",
+      "vendorName": "Bluefern Supplies Ltd",
+      "vendorAddress": "Station Lane 51, Mockford MK2 7QT",
+      "customerName": "Copperfield Tools Inc",
+      "customerAddress": "Station Lane 22, Sampleton AB1 2CD",
+      "lineItems": [
+        {
+          "description": "Ergonomic office chair",
+          "quantity": 8,
+          "unitPrice": 420.55,
+          "totalPrice": 3364.4
+        },
+        {
+          "description": "Copy paper A4 (500 sheets)",
+          "quantity": 8,
+          "unitPrice": 642.77,
+          "totalPrice": 5142.16
+        },
+        {
+          "description": "On-site installation",
+          "quantity": 8,
+          "unitPrice": 1077.28,
+          "totalPrice": 8618.24
+        },
+        {
+          "description": "Copier maintenance plan",
+          "quantity": 1,
+          "unitPrice": 674.03,
+          "totalPrice": 674.03
+        },
+        {
+          "description": "Freight delivery charge",
+          "quantity": 7,
+          "unitPrice": 718.7,
+          "totalPrice": 5030.9
+        }
+      ],
+      "subtotal": 22829.73,
+      "taxAmount": 1598.08,
+      "totalAmount": 24427.81,
+      "currency": "USD"
+    },
+    "printedOnly": {
+      "iban": "DE29802466582250570791",
+      "vatId": "DE183434302",
+      "email": "billing@bluefern.example.com",
+      "phone": "+49 555 907438",
+      "vatRate": 7
+    }
+  }
+]

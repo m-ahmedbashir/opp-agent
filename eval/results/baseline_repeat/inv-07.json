@@ -1,0 +1,79 @@
+{
+  "id": "inv-07",
+  "language": "german",
+  "quality": "scanned",
+  "extractedData": {
+    "invoiceNumber": "RE-2026-0588",
+    "issueDate": "09.10.2026",
+    "dueDate": "08.11.2026",
+    "vendorName": "Weserblick Handels AG",
+    "vendorAddress": "Münzweg 26, 80331 Probedorf",
+    "customerName": "Falkenried Elektro OHG",
+    "customerAddress": "Am Sparrenberg 13, 50667 Beispieburg",
+    "lineItems": [
+      {
+        "description": "Bürostuhl Ergo Plus",
+        "quantity": 10,
+        "unitPrice": 376.82,
+        "totalPrice": 3768.2
+      },
+      {
+        "description": "Lizenz Buchhaltungssoftware",
+        "quantity": 11,
+        "unitPrice": 941.79,
+        "totalPrice": 10359.69
+      },
+      {
+        "description": "Versandkosten Spedition",
+        "quantity": 5,
+        "unitPrice": 44.76,
+        "totalPrice": 223.8
+      },
+      {
+        "description": "Tonerkartusche schwarz",
+        "quantity": 10,
+        "unitPrice": 1151.59,
+        "totalPrice": 11515.9
+      },
+      {
+        "description": "Monitorhalterung schwenkbar",
+        "quantity": 7,
+        "unitPrice": 881.43,
+        "totalPrice": 6170.01
+      },
+      {
+        "description": "Schulung Datenschutz",
+        "quantity": 1,
+        "unitPrice": 679.08,
+        "totalPrice": 679.08
+      }
+    ],
+    "subtotal": 32716.68,
+    "taxAmount": 6216.17,
+    "totalAmount": 38932.85,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 5202,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "\n\n",
+  "piiDetected": false,
+  "imagePiiDetected": true,
+  "sourceType": "PDF"
+}

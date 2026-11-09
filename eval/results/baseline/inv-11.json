@@ -1,0 +1,49 @@
+{
+  "id": "inv-11",
+  "language": "english",
+  "quality": "photo",
+  "extractedData": {
+    "invoiceNumber": "INV-10610",
+    "issueDate": "4 Oct 2026",
+    "dueDate": "3 Nov 2026",
+    "vendorName": "Greyfriars Consulting Ltd",
+    "vendorAddress": "Harbour Road 17, Exampleville EX4 5MP",
+    "customerName": "Bluefern Supplies Ltd",
+    "customerAddress": "Elm Close 3, Exampleville EX4 5MP",
+    "lineItems": [
+      {
+        "description": "Freight delivery charge",
+        "quantity": 10,
+        "unitPrice": 493.71,
+        "totalPrice": 4937.1
+      }
+    ],
+    "subtotal": 4937.1,
+    "taxAmount": 938.05,
+    "totalAmount": 5875.15,
+    "currency": "GBP"
+  },
+  "schemaValid": true,
+  "latencyMs": 2106,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "",
+  "piiDetected": false,
+  "imagePiiDetected": true,
+  "sourceType": "IMAGE"
+}

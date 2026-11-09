@@ -17,6 +17,7 @@
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#️-getting-started)
 - [The Magic Inside the Code](#-the-magic-inside-the-code)
+- [Evaluation](#-evaluation)
 - [Deployment](#-deployment)
 - [Contributing](#-contributing)
 - [Acknowledgments](#-acknowledgments)
@@ -220,6 +221,20 @@ async function onApprove(toolCallId: string, invoiceId: string) {
   await addToolOutput({ toolCallId, tool: 'deleteInvoice', output: { success: res.ok } });
 }
 ```
+
+---
+
+## 📏 Evaluation
+
+[`eval/`](eval/README.md) measures the real extraction pipeline against 12 synthetic German and English invoices (clean, scanned and photo). The baseline showed that PII masking was erasing compact invoice numbers before the model saw them, and fixing the masking gave these results (`google:gemini-3.1-flash-lite`, two runs each):
+
+| Metric | Baseline | Improved |
+|---|---|---|
+| `invoiceNumber`, completed calls only | 10/12, 9/11 | 11/11, 12/12 |
+| Accuracy when completed | 97.7%, 97.5% | 99.2%, 99.2% |
+| Field accuracy, all documents (includes timeouts) | 97.7%, 89.4% | 90.9%, 99.2% |
+
+One timeout costs about 8 points on the all-documents score, so use the completed rows to judge the fix. The sample is small and synthetic, so these numbers show direction, not production accuracy.
 
 ---
 
