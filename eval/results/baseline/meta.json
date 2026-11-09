@@ -1,0 +1,13 @@
+{
+  "runName": "baseline",
+  "modelKey": "google:gemini-3.1-flash-lite",
+  "modelId": "gemini-3.1-flash-lite",
+  "processingMode": "vision",
+  "only": null,
+  "limit": null,
+  "documents": 12,
+  "failures": 0,
+  "gitCommit": "50d34d47cbe35547e18b5df32dcd47cbcb6349b6",
+  "gitDirty": false,
+  "finishedAt": "2026-11-07T15:39:32.774Z"
+}

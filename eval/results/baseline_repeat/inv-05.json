@@ -1,0 +1,55 @@
+{
+  "id": "inv-05",
+  "language": "english",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": null,
+    "issueDate": "2026-10-19",
+    "dueDate": null,
+    "vendorName": "Copperfield Tools Inc",
+    "vendorAddress": "Maple Avenue 65, Mockford MK2 7QT",
+    "customerName": "Greyfriars Consulting Ltd",
+    "customerAddress": "Harbour Road 12, Exampleville EX4 5MP",
+    "lineItems": [
+      {
+        "description": "Accounting software licence",
+        "quantity": 9,
+        "unitPrice": 12.15,
+        "totalPrice": 109.35
+      },
+      {
+        "description": "Data protection training",
+        "quantity": 3,
+        "unitPrice": 202.49,
+        "totalPrice": 607.47
+      }
+    ],
+    "subtotal": 716.82,
+    "taxAmount": 50.18,
+    "totalAmount": 767,
+    "currency": "GBP"
+  },
+  "schemaValid": true,
+  "latencyMs": 1908,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 0,
+    "issueDate": 1,
+    "dueDate": 0,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 0.83,
+  "maskedText": "Copperfield Tools Inc\nMaple Avenue 65, Mockford MK2 7QT\nInvoice Invoice number: [REDACTED:VAT]\nInvoice date: 2026-10-19\nAll amounts in GBP\nBill to\nGreyfriars Consulting Ltd\nHarbour Road 12, Exampleville EX4 5MP\nDescription Qty Unit price Total\nAccounting software licence 9 12.15 109.35\nData protection training 3 202.49 607.47\nSubtotal 716.82\nVAT 7 % 50.18\nAmount due 767.00\nIBAN DE60 [REDACTED:CARD] | VAT ID [REDACTED:VAT] | [REDACTED:EMAIL] | Phone +49 [REDACTED:PHONE]49\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

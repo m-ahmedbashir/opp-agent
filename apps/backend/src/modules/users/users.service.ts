@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 import {
-  DEFAULT_MODEL_KEY,
+  getDefaultModelKey,
   DEFAULT_PROCESSING_MODE,
   MODEL_REGISTRY,
   PROCESSING_MODES,
@@ -43,7 +43,7 @@ export class UsersService {
 
     return {
       extractionMode: user?.extractionMode || 'MANUAL_REVIEW',
-      modelKey: user?.modelKey || DEFAULT_MODEL_KEY,
+      modelKey: user?.modelKey || getDefaultModelKey(),
       processingMode: user?.processingMode || DEFAULT_PROCESSING_MODE,
       hasApiKey: Boolean(user?.encryptedApiKey),
     };
@@ -75,7 +75,7 @@ export class UsersService {
       create: {
         clerkId: userId,
         extractionMode: updates.extractionMode ?? 'MANUAL_REVIEW',
-        modelKey: (updates.modelKey as ModelKey) ?? DEFAULT_MODEL_KEY,
+        modelKey: (updates.modelKey as ModelKey) ?? getDefaultModelKey(),
         processingMode: updates.processingMode ?? DEFAULT_PROCESSING_MODE,
         ...(encryptedApiKey !== undefined && { encryptedApiKey }),
       },

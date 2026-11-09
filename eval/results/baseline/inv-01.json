@@ -1,0 +1,61 @@
+{
+  "id": "inv-01",
+  "language": "german",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": "RE-2026-0412",
+    "issueDate": "15.10.2026",
+    "dueDate": "14.11.2026",
+    "vendorName": "Nordlicht Bürotechnik GmbH",
+    "vendorAddress": "Herforder Allee 40, 33602 Testhausen",
+    "customerName": "Weserblick Handels AG",
+    "customerAddress": "Schillerplatz 61, 10115 Musterstadt",
+    "lineItems": [
+      {
+        "description": "Bürostuhl Ergo Plus",
+        "quantity": 7,
+        "unitPrice": 732.92,
+        "totalPrice": 5130.44
+      },
+      {
+        "description": "Schulung Datenschutz",
+        "quantity": 2,
+        "unitPrice": 257.28,
+        "totalPrice": 514.56
+      },
+      {
+        "description": "Tonerkartusche schwarz",
+        "quantity": 1,
+        "unitPrice": 1183.01,
+        "totalPrice": 1183.01
+      }
+    ],
+    "subtotal": 6828.01,
+    "taxAmount": 1297.32,
+    "totalAmount": 8125.33,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 3990,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "Nordlicht Bürotechnik GmbH\nHerforder Allee 40, 33602 Testhausen\nRechnung Rechnungsnummer: RE-2026-0412\nRechnungsdatum: 15.10.2026\nFällig am: 14.11.2026\nAlle Beträge in EUR\nRechnungsempfänger\nWeserblick Handels AG\nSchillerplatz 61, 10115 Musterstadt\nBeschreibung Menge Einzelpreis Gesamt\nBürostuhl Ergo Plus 7 732,92 5.130,44\nSchulung Datenschutz 2 257,28 514,56\nTonerkartusche schwarz 1 1.183,01 1.183,01\nZwischensumme (netto) 6.828,01\nMwSt. 19 % 1.297,32\nGesamtbetrag 8.125,33\nIBAN DE35 [REDACTED:CARD] | USt-IdNr. [REDACTED:VAT] | [REDACTED:EMAIL] | Tel. +49 [REDACTED:PHONE]61\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

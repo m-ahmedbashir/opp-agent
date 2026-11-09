@@ -1,0 +1,91 @@
+{
+  "id": "inv-03",
+  "language": "german",
+  "quality": "clean",
+  "extractedData": {
+    "invoiceNumber": "2026/0093",
+    "issueDate": "2026-09-22",
+    "dueDate": "2026-10-06",
+    "vendorName": "Lindenhof Software GmbH",
+    "vendorAddress": "Lindenstraße 20, 50667 Beispielburg",
+    "customerName": "Nordlicht Bürotechnik GmbH",
+    "customerAddress": "Lindenstraße 12, 10115 Musterstadt",
+    "lineItems": [
+      {
+        "description": "Schulung Datenschutz",
+        "quantity": 8,
+        "unitPrice": 962.99,
+        "totalPrice": 7703.92
+      },
+      {
+        "description": "Lizenz Buchhaltungssoftware",
+        "quantity": 7,
+        "unitPrice": 351.01,
+        "totalPrice": 2457.07
+      },
+      {
+        "description": "Bürostuhl Ergo Plus",
+        "quantity": 11,
+        "unitPrice": 693.91,
+        "totalPrice": 7633.01
+      },
+      {
+        "description": "Monitorhalterung schwenkbar",
+        "quantity": 11,
+        "unitPrice": 943.95,
+        "totalPrice": 10383.45
+      },
+      {
+        "description": "Tonerkartusche schwarz",
+        "quantity": 11,
+        "unitPrice": 29.32,
+        "totalPrice": 322.52
+      },
+      {
+        "description": "Aktenvernichter P-4",
+        "quantity": 6,
+        "unitPrice": 658.3,
+        "totalPrice": 3949.8
+      },
+      {
+        "description": "Montage vor Ort",
+        "quantity": 6,
+        "unitPrice": 1026.47,
+        "totalPrice": 6158.82
+      },
+      {
+        "description": "Rabatt 5 %",
+        "quantity": 1,
+        "unitPrice": -1930.43,
+        "totalPrice": -1930.43
+      }
+    ],
+    "subtotal": 36678.16,
+    "taxAmount": 6968.85,
+    "totalAmount": 43647.01,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 2159,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "Lindenhof Software GmbH\nLindenstraße 20, 50667 Beispielburg\nRechnung Rechnungsnummer: 2026/0093\nRechnungsdatum: 22. September 2026\nFällig am: 6. Oktober 2026\nAlle Beträge in EUR\nRechnungsempfänger\nNordlicht Bürotechnik GmbH\nLindenstraße 12, 10115 Musterstadt\nBeschreibung Menge Einzelpreis Gesamt\nSchulung Datenschutz 8 962,99 7.703,92\nLizenz Buchhaltungssoftware 7 351,01 2.457,07\nBürostuhl Ergo Plus 11 693,91 7.633,01\nMonitorhalterung schwenkbar 11 943,95 10.383,45\nTonerkartusche schwarz 11 29,32 322,52\nAktenvernichter P-4 6 658,30 3.949,80\nMontage vor Ort 6 1.026,47 6.158,82\nRabatt 5 % 1 -1.930,43 -1.930,43\nZwischensumme (netto) 36.678,16\nMwSt. 19 % 6.968,85\nGesamtbetrag 43.647,01\nIBAN DE36 [REDACTED:CARD] | USt-IdNr. [REDACTED:VAT] | [REDACTED:EMAIL] | Tel. +49 [REDACTED:PHONE]14\n\n",
+  "piiDetected": true,
+  "imagePiiDetected": false,
+  "sourceType": "PDF"
+}

@@ -1,0 +1,67 @@
+{
+  "id": "inv-10",
+  "language": "german",
+  "quality": "photo",
+  "extractedData": {
+    "invoiceNumber": "RE-2026-0701",
+    "issueDate": "25.10.2026",
+    "dueDate": "24.11.2026",
+    "vendorName": "Lindenhof Software GmbH",
+    "vendorAddress": "Lindenstraße 90, 10115 Musterstadt",
+    "customerName": "Teutoburger Druckhaus KG",
+    "customerAddress": "Schillerplatz 19, 33602 Testhausen",
+    "lineItems": [
+      {
+        "description": "Bürostuhl Ergo Plus",
+        "quantity": 10,
+        "unitPrice": 714.22,
+        "totalPrice": 7142.2
+      },
+      {
+        "description": "Monitorhalterung schwenkbar",
+        "quantity": 9,
+        "unitPrice": 1065.45,
+        "totalPrice": 9589.05
+      },
+      {
+        "description": "Versandkosten Spedition",
+        "quantity": 10,
+        "unitPrice": 881.5,
+        "totalPrice": 8815
+      },
+      {
+        "description": "Schulung Datenschutz",
+        "quantity": 3,
+        "unitPrice": 836.19,
+        "totalPrice": 2508.57
+      }
+    ],
+    "subtotal": 28054.82,
+    "taxAmount": 1963.84,
+    "totalAmount": 30018.66,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 2214,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 1,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 1,
+  "maskedText": "",
+  "piiDetected": false,
+  "imagePiiDetected": true,
+  "sourceType": "IMAGE"
+}

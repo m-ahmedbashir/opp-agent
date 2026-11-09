@@ -1,0 +1,43 @@
+{
+  "name": "eval",
+  "version": "0.0.1",
+  "private": true,
+  "license": "ISC",
+  "scripts": {
+    "generate": "tsx generate-invoices.ts",
+    "run-eval": "tsx run-eval.ts",
+    "report": "tsx report.ts",
+    "test": "jest",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opp/shared": "workspace:*",
+    "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.17.2",
+    "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.10.7",
+    "@types/pdfkit": "^0.17.3",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.7.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "testEnvironment": "node"
+  }
+}

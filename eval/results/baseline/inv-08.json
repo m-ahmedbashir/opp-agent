@@ -1,0 +1,55 @@
+{
+  "id": "inv-08",
+  "language": "german",
+  "quality": "scanned",
+  "extractedData": {
+    "invoiceNumber": "R-77120",
+    "issueDate": "2026-10-23",
+    "dueDate": null,
+    "vendorName": "Sennestadt Logistik GmbH",
+    "vendorAddress": "Herforder Allee 42, 10115 Musterstadt",
+    "customerName": "Lindenhof Software GmbH",
+    "customerAddress": "Lindenstraße 52, 80331 Probedorf",
+    "lineItems": [
+      {
+        "description": "Schulung Datenschutz",
+        "quantity": 4,
+        "unitPrice": 762.29,
+        "totalPrice": 3049.16
+      },
+      {
+        "description": "Lizenz Buchhaltungssoftware",
+        "quantity": 10,
+        "unitPrice": 1231.59,
+        "totalPrice": 12315.9
+      }
+    ],
+    "subtotal": 15365.06,
+    "taxAmount": 1075.55,
+    "totalAmount": 16440.61,
+    "currency": "EUR"
+  },
+  "schemaValid": true,
+  "latencyMs": 3993,
+  "error": null,
+  "rateLimitRetries": 0,
+  "confidence": {
+    "invoiceNumber": 1,
+    "issueDate": 1,
+    "dueDate": 0,
+    "vendorName": 1,
+    "vendorAddress": 1,
+    "customerName": 1,
+    "customerAddress": 1,
+    "subtotal": 1,
+    "taxAmount": 1,
+    "totalAmount": 1,
+    "currency": 1,
+    "lineItems": 1
+  },
+  "avgConfidence": 0.92,
+  "maskedText": "\n\n",
+  "piiDetected": false,
+  "imagePiiDetected": true,
+  "sourceType": "PDF"
+}

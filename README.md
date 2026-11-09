@@ -17,6 +17,7 @@
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#️-getting-started)
 - [The Magic Inside the Code](#-the-magic-inside-the-code)
+- [Evaluation](#-evaluation)
 - [Deployment](#-deployment)
 - [Contributing](#-contributing)
 - [Acknowledgments](#-acknowledgments)
@@ -27,7 +28,7 @@
 
 Someone on your ops team is manually retyping invoice PDFs and photos into a database right now — slow, error-prone, and it doesn't scale. **OPP Agent** automates that step without removing the human: it extracts, validates, and stages the data behind a **Human-in-the-Loop (HITL)** governance layer, so nothing consequential saves without an explicit approval click.
 
-Whether the input is a scanned invoice photo, a plain-text export, or a pasted CSV, the agent processes it with **Groq (Llama 4 Scout)** through the **Vercel AI SDK**, validates every field against a **Zod** schema shared across the whole stack, and surfaces a per-field confidence score so a reviewer knows exactly what to double-check instead of re-reading everything blindly.
+Whether the input is a scanned invoice photo, a plain-text export, or a pasted CSV, the agent processes it with **Google Gemini 3.1 Flash Lite** (the default, swappable per user) through the **Vercel AI SDK**, validates every field against a **Zod** schema shared across the whole stack, and surfaces a per-field confidence score so a reviewer knows exactly what to double-check instead of re-reading everything blindly.
 
 The repo is a `pnpm` + Turborepo monorepo: a **Next.js** frontend (Clerk auth, a chat assistant with agentic tool-approval) and a **NestJS** backend (Prisma/PostgreSQL, the extraction pipeline, PII compliance masking). Every push and PR runs a real CI pipeline (typecheck + test across all workspaces) — the badge above reflects the actual current state of `main`, not an aspiration.
 
@@ -48,10 +49,10 @@ The repo is a `pnpm` + Turborepo monorepo: a **Next.js** frontend (Clerk auth, a
 - **Defense-in-depth uploads.** Files are buffered in memory only (never written to disk), and MIME type/size are validated independently at three layers (Multer, the NestJS pipe, and an in-service allowlist) before any processing starts.
 - **Real observability.** Every extraction attempt — success *and* failure — writes an `ExtractionLog` row. The `/extraction/stats` endpoint runs Prisma aggregate queries concurrently via `Promise.all` and reports success rate, text-PII rate, image-PII rate, local OCR usage rate, and average latency by source type.
 - **A virtualized, stream-aware chat UI.** The message list renders through `react-virtuoso` instead of one DOM node per message, and autoscroll behaviour adapts to state (`'auto'` while streaming, `'smooth'` on submit, off once the user has scrolled up to read history).
-- **A provider-agnostic model registry.** Extraction no longer hard-codes Groq — a small registry (`model-registry.ts`) maps a key to a provider (Groq, OpenAI, or Anthropic today) and tracks per-model capability, so a text-only model can't silently be sent an image it can't read. Swapping the default model is a one-line config change, not a code change. Verified by actually booting the app and confirming NestJS resolves the new dependency correctly, not just by reading the code.
+- **A provider-agnostic model registry.** Extraction no longer hard-codes Groq — a small registry (`model-registry.ts`) maps a key to a provider (Google, Groq, OpenRouter, OpenAI, or Anthropic today) and tracks per-model capability, so a text-only model can't silently be sent an image it can't read. Swapping the default model is a one-line config change, not a code change. Verified by actually booting the app and confirming NestJS resolves the new dependency correctly, not just by reading the code.
 - **A per-user model preference, actually enforced.** A model picker in Settings (`GET /extraction/models` reads the registry directly, so the UI never hand-duplicates it) saves a `modelKey` per user, same pattern as the existing `extractionMode` setting. Every upload now carries a `userId`; the extraction pipeline looks up that user's saved model before processing. Verified live against the real database, not just mocks — set a real user to a text-only model and confirmed the vision guard rejected an image upload citing that exact model.
-- **BYOK — bring your own provider key, encrypted at rest.** A user can save their own Groq/OpenAI/Anthropic key in Settings instead of using the app's shared one. AES-256-GCM (authenticated encryption — a tampered ciphertext fails to decrypt rather than silently returning garbage), with the pure crypto logic split from the NestJS service so it's unit-testable with no database or env var needed. The public settings endpoint never returns the key or its ciphertext — only a `hasApiKey` boolean; decryption happens once, server-side, immediately before the provider call. Verified against the real database: saved a key through the real API, then independently decrypted the actual stored row with the production key and confirmed it matches — not just a mocked round-trip.
-- **70 passing unit tests** across extraction, compliance, local OCR, model-registry, per-user model-preference, and BYOK encryption/tamper-detection coverage.
+- **BYOK — bring your own provider key, encrypted at rest.** A user can save their own key for their chosen model's provider in Settings instead of using the app's shared one. AES-256-GCM (authenticated encryption — a tampered ciphertext fails to decrypt rather than silently returning garbage), with the pure crypto logic split from the NestJS service so it's unit-testable with no database or env var needed. The public settings endpoint never returns the key or its ciphertext — only a `hasApiKey` boolean; decryption happens once, server-side, immediately before the provider call. Verified against the real database: saved a key through the real API, then independently decrypted the actual stored row with the production key and confirmed it matches — not just a mocked round-trip.
+- **155 passing unit tests**: 120 in the backend (extraction, compliance, local OCR, model registry, per-user model preference, BYOK encryption and tamper detection, email ingestion) and 35 for the eval scorer.
 
 
 ### 🔵 Roadmap
@@ -68,7 +69,7 @@ The repo is a `pnpm` + Turborepo monorepo: a **Next.js** frontend (Clerk auth, a
 
 **Stretch (broader scope):**
 - Queue-based batch processing (BullMQ) for bulk uploads instead of one synchronous request per file.
-- Rate limiting on the API itself (NestJS Throttler), plus explicit retry/backoff around Groq's 429s rather than a single caught exception.
+- Rate limiting on the API itself (NestJS Throttler), plus explicit retry/backoff around providers' 429s rather than a single caught exception.
 - OpenTelemetry tracing around the extraction pipeline, so latency and failures are visible per-span, not just per-log-line.
 - Fine-grained permissions on top of Clerk auth (PBAC — who can approve vs. who can only view), rather than a single per-user extraction-mode toggle.
 - CSV/export reporting and a webhook emitter for downstream systems, so approved invoices can push out to something other than this app's own database.
@@ -88,7 +89,7 @@ opp-agent/
 │   ├── frontend/       # Next.js app — dashboard, chat assistant, extraction review UI
 │   └── backend/        # NestJS API
 │       └── src/modules/
-│           ├── extraction/    # Upload handling + the Groq extraction pipeline
+│           ├── extraction/    # Upload handling + the extraction pipeline
 │           ├── compliance/    # PII masking
 │           ├── invoices/      # CRUD for saved invoices
 │           └── users/         # Per-user extraction-mode (HITL) settings
@@ -104,7 +105,7 @@ opp-agent/
 
 ## 🛠 Tech Stack
 
-- **AI:** Vercel AI SDK 6 via a provider-agnostic model registry — Groq (`llama-4-scout-17b-16e-instruct`, default), with OpenAI and Anthropic wired in and ready to select
+- **AI:** Vercel AI SDK 6 via a provider-agnostic model registry. Google Gemini 3.1 Flash Lite (`google:gemini-3.1-flash-lite`) is the default, with Groq, OpenRouter, OpenAI and Anthropic also selectable. Some registry entries, including Groq's Llama 4 Scout, may no longer be offered by their provider.
 - **Validation:** Zod, `nestjs-zod`
 - **Document parsing:** `pdf-parse` (PDF text-layer extraction + `@napi-rs/canvas` rasterization fallback)
 - **Frontend:** Next.js, `@ai-sdk/react` (`useChat`), Tailwind CSS, shadcn/ui, `react-virtuoso`
@@ -137,7 +138,12 @@ pnpm install
 cd apps/backend
 cp .env.example .env
 ```
-Set `GROQ_API_KEY` (free, no card required, from [console.groq.com](https://console.groq.com)) and `DATABASE_URL` (your PostgreSQL connection string).
+Set these:
+- `GOOGLE_GENERATIVE_AI_API_KEY`, for the default Gemini model. Get it from [Google AI Studio](https://aistudio.google.com/apikey); a key in a project without billing uses the free tier.
+- `DATABASE_URL`, your PostgreSQL connection string.
+- `BYOK_ENCRYPTION_KEY`, used to encrypt keys and mailbox passwords that users save.
+
+`DEFAULT_MODEL_KEY` picks the default model. Other models need their provider's key, such as `GROQ_API_KEY` or `OPENROUTER_API_KEY`.
 
 **Frontend (`apps/frontend/.env`):**
 ```bash
@@ -166,7 +172,7 @@ pnpm dev:backend
 ### Running Tests & Typecheck
 
 ```bash
-pnpm test         # 63 tests, all passing — same command CI runs
+pnpm test         # 155 tests, all passing — same command CI runs
 pnpm run typecheck  # tsc --noEmit across every workspace
 ```
 
@@ -220,6 +226,20 @@ async function onApprove(toolCallId: string, invoiceId: string) {
   await addToolOutput({ toolCallId, tool: 'deleteInvoice', output: { success: res.ok } });
 }
 ```
+
+---
+
+## 📏 Evaluation
+
+[`eval/`](eval/README.md) measures the real extraction pipeline against 12 synthetic German and English invoices (clean, scanned and photo). The baseline showed that PII masking was erasing compact invoice numbers before the model saw them, and fixing the masking gave these results (`google:gemini-3.1-flash-lite`, two runs each):
+
+| Metric | Baseline | Improved |
+|---|---|---|
+| `invoiceNumber`, completed calls only | 10/12, 9/11 | 11/11, 12/12 |
+| Accuracy when completed | 97.7%, 97.5% | 99.2%, 99.2% |
+| Field accuracy, all documents (includes timeouts) | 97.7%, 89.4% | 90.9%, 99.2% |
+
+One timeout costs about 8 points on the all-documents score, so use the completed rows to judge the fix. The sample is small and synthetic, so these numbers show direction, not production accuracy.
 
 ---
 
